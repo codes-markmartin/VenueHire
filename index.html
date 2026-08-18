@@ -1,0 +1,866 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Newlife Venue Hire</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+  :root{
+    --navy:#12283d;
+    --navy-light:#1b3a57;
+    --accent:#2f7fd1;
+    --accent-dark:#1f5c9c;
+    --bg:#f4f6f9;
+    --card:#ffffff;
+    --border:#dfe4ea;
+    --text:#1e2a36;
+    --muted:#6b7785;
+    --blue-tint:#dcebfb;
+    --green-tint:#d9f3e0;
+    --green:#2f9e52;
+    --red:#c0392b;
+    --red-tint:#fbe1de;
+    --amber-tint:#fdf1d6;
+    --radius:8px;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--bg);color:var(--text);}
+  .hidden{display:none !important;}
+  button{font-family:inherit;cursor:pointer;}
+  input,select,textarea{font-family:inherit;}
+
+  /* ---------- Login ---------- */
+  #loginScreen{
+    min-height:100vh;display:flex;align-items:center;justify-content:center;
+    background:linear-gradient(135deg,var(--navy) 0%,var(--navy-light) 100%);
+  }
+  .login-card{
+    background:var(--card);width:360px;max-width:90vw;border-radius:12px;
+    padding:36px 32px;box-shadow:0 20px 50px rgba(0,0,0,0.35);text-align:center;
+  }
+  .login-card h1{font-size:22px;margin:0 0 4px;color:var(--navy);}
+  .login-card p.sub{color:var(--muted);font-size:13px;margin:0 0 26px;}
+  .role-buttons{display:flex;gap:10px;margin-bottom:18px;}
+  .role-btn{
+    flex:1;padding:14px 8px;border-radius:var(--radius);border:2px solid var(--border);
+    background:#fff;font-weight:600;font-size:14px;color:var(--navy);transition:all .15s;
+  }
+  .role-btn:hover{border-color:var(--accent);}
+  .role-btn.active{border-color:var(--accent);background:var(--blue-tint);}
+  #passwordSection{text-align:left;}
+  #passwordSection label{font-size:12px;color:var(--muted);display:block;margin-bottom:6px;}
+  #passwordInput{
+    width:100%;padding:10px 12px;border:1px solid var(--border);border-radius:6px;font-size:14px;margin-bottom:14px;
+  }
+  #loginBtn{
+    width:100%;padding:12px;border:none;border-radius:6px;background:var(--accent);color:#fff;
+    font-weight:600;font-size:14px;
+  }
+  #loginBtn:hover{background:var(--accent-dark);}
+  #loginError{color:var(--red);font-size:12.5px;margin-top:10px;min-height:16px;}
+  #loginConfigWarning{
+    background:var(--amber-tint);color:#7a5b00;font-size:11.5px;padding:10px;border-radius:6px;margin-top:16px;text-align:left;
+  }
+
+  /* ---------- App shell ---------- */
+  header{
+    background:var(--navy);color:#fff;padding:14px 24px;display:flex;align-items:center;justify-content:space-between;
+  }
+  header .brand{display:flex;align-items:center;gap:10px;}
+  header .brand h1{font-size:18px;margin:0;font-weight:700;letter-spacing:.3px;}
+  header .brand span.tag{font-size:11px;background:var(--accent);padding:2px 8px;border-radius:12px;font-weight:600;}
+  header .who{display:flex;align-items:center;gap:14px;font-size:13px;}
+  header .who button{background:transparent;border:1px solid rgba(255,255,255,.4);color:#fff;padding:6px 12px;border-radius:6px;font-size:12.5px;}
+  header .who button:hover{background:rgba(255,255,255,.12);}
+
+  main{max-width:1400px;margin:0 auto;padding:20px 24px 60px;}
+
+  .stats-row{display:flex;gap:14px;flex-wrap:wrap;margin-bottom:18px;}
+  .stat-card{
+    background:var(--card);border:1px solid var(--border);border-radius:var(--radius);
+    padding:12px 18px;min-width:150px;flex:1;
+  }
+  .stat-card .num{font-size:22px;font-weight:700;color:var(--navy);}
+  .stat-card .lbl{font-size:11.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;}
+
+  .toolbar{
+    background:var(--card);border:1px solid var(--border);border-radius:var(--radius);
+    padding:14px 16px;margin-bottom:16px;display:flex;flex-wrap:wrap;gap:10px;align-items:center;
+  }
+  .toolbar input[type=text], .toolbar select{
+    padding:8px 10px;border:1px solid var(--border);border-radius:6px;font-size:13px;
+  }
+  .chip{
+    padding:6px 13px;border-radius:16px;border:1px solid var(--border);background:#fff;font-size:12.5px;color:var(--navy);font-weight:600;
+  }
+  .chip.active{background:var(--accent);color:#fff;border-color:var(--accent);}
+  .spacer{flex:1;}
+  .btn{
+    padding:9px 16px;border-radius:6px;border:none;font-size:13px;font-weight:600;
+  }
+  .btn-primary{background:var(--accent);color:#fff;}
+  .btn-primary:hover{background:var(--accent-dark);}
+  .btn-outline{background:#fff;border:1px solid var(--border);color:var(--navy);}
+  .btn-outline:hover{border-color:var(--accent);}
+  .btn-danger{background:var(--red);color:#fff;}
+
+  .export-row{display:flex;gap:8px;align-items:center;}
+
+  table{width:100%;border-collapse:collapse;background:var(--card);border-radius:var(--radius);overflow:hidden;}
+  thead th{
+    background:var(--navy);color:#fff;text-align:left;padding:10px 10px;font-size:11.5px;text-transform:uppercase;letter-spacing:.3px;
+  }
+  tbody td{padding:10px 10px;font-size:13px;border-bottom:1px solid var(--border);vertical-align:top;}
+  tbody tr:hover{background:#f8fafc;}
+  tbody tr.cancelled td{color:var(--muted);text-decoration:line-through;}
+  .badge{display:inline-block;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:700;}
+  .badge.yes{background:var(--green-tint);color:var(--green);}
+  .badge.no{background:var(--red-tint);color:var(--red);}
+  .badge.cancelled{background:var(--red-tint);color:var(--red);}
+  .row-actions button{
+    background:none;border:1px solid var(--border);border-radius:5px;padding:4px 9px;font-size:12px;margin-right:4px;color:var(--navy);
+  }
+  .row-actions button:hover{border-color:var(--accent);}
+  .agreement-link{font-size:12px;color:var(--accent);text-decoration:none;}
+  .empty-state{padding:40px;text-align:center;color:var(--muted);}
+
+  /* ---------- Modal ---------- */
+  #modalOverlay{
+    position:fixed;inset:0;background:rgba(10,20,30,.5);display:flex;align-items:flex-start;justify-content:center;
+    padding:40px 16px;overflow-y:auto;z-index:50;
+  }
+  #hireModal{
+    background:#fff;border-radius:10px;width:720px;max-width:100%;padding:26px 28px 20px;
+  }
+  #hireModal h2{margin:0 0 4px;font-size:18px;color:var(--navy);}
+  #hireModal .modal-sub{font-size:12px;color:var(--muted);margin-bottom:18px;}
+  .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px 16px;}
+  .form-grid .full{grid-column:1/-1;}
+  .field label{display:block;font-size:11.5px;color:var(--muted);margin-bottom:4px;font-weight:600;text-transform:uppercase;letter-spacing:.3px;}
+  .field input, .field select, .field textarea{
+    width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:6px;font-size:13.5px;
+  }
+  .field textarea{resize:vertical;min-height:44px;}
+  .field.disabled input, .field.disabled textarea, .field.disabled select{background:#f1f3f5;color:var(--muted);}
+  fieldset{border:1px solid var(--border);border-radius:8px;padding:14px 16px 16px;margin:16px 0 0;}
+  fieldset legend{font-size:12px;font-weight:700;color:var(--navy);padding:0 6px;text-transform:uppercase;letter-spacing:.4px;}
+  .checkline{display:flex;align-items:center;gap:8px;margin-bottom:8px;}
+  .checkline input[type=checkbox]{width:16px;height:16px;}
+  .checkline label{font-size:12.5px;color:var(--text);font-weight:600;margin:0;}
+  .modal-footer{display:flex;justify-content:space-between;align-items:center;margin-top:20px;padding-top:16px;border-top:1px solid var(--border);}
+  .modal-footer .left, .modal-footer .right{display:flex;gap:8px;}
+  .current-file{font-size:12px;margin-top:4px;}
+
+  #toast{
+    position:fixed;bottom:22px;right:22px;background:var(--navy);color:#fff;padding:12px 18px;border-radius:8px;font-size:13px;
+    box-shadow:0 8px 24px rgba(0,0,0,.25);z-index:100;
+  }
+</style>
+</head>
+<body>
+
+<!-- ================= LOGIN ================= -->
+<div id="loginScreen">
+  <div class="login-card">
+    <h1>Newlife Venue Hire</h1>
+    <p class="sub">Sign in to continue</p>
+    <div class="role-buttons">
+      <button type="button" class="role-btn" data-role="simon">Simon<br><span style="font-weight:400;font-size:11px;">Venue Hire</span></button>
+      <button type="button" class="role-btn" data-role="finance">Finance<br><span style="font-weight:400;font-size:11px;">Invoicing</span></button>
+    </div>
+    <div id="passwordSection" class="hidden">
+      <label for="passwordInput">Password</label>
+      <input type="password" id="passwordInput" autocomplete="current-password" />
+      <button id="loginBtn">Sign In</button>
+    </div>
+    <div id="loginError"></div>
+    <div id="loginConfigWarning" class="hidden">
+      ⚠️ Firebase is not configured yet. Open <code>index.html</code> and fill in the <code>firebaseConfig</code> object near the top of the script — see SETUP_GUIDE.md.
+    </div>
+  </div>
+</div>
+
+<!-- ================= APP ================= -->
+<div id="appScreen" class="hidden">
+  <header>
+    <div class="brand">
+      <h1>Newlife Venue Hire</h1>
+      <span class="tag" id="roleTag">—</span>
+    </div>
+    <div class="who">
+      <span id="whoLabel"></span>
+      <button id="logoutBtn">Log out</button>
+    </div>
+  </header>
+
+  <main>
+    <div class="stats-row" id="statsRow"></div>
+
+    <div class="toolbar">
+      <input type="text" id="searchInput" placeholder="Search hirer, contact, email..." style="min-width:220px;" />
+      <select id="roomFilter"><option value="">All Rooms</option></select>
+      <select id="monthFilter"><option value="">All Time</option></select>
+      <span class="chip" data-filter="all">All</span>
+      <span class="chip" data-filter="needsDeposit">Needs Deposit Invoice</span>
+      <span class="chip" data-filter="needsBalance">Needs Balance Invoice</span>
+      <span class="chip" data-filter="fullyPaid">Fully Paid</span>
+      <span class="chip" data-filter="upcoming">Upcoming</span>
+      <span class="chip" data-filter="cancelled">Cancelled</span>
+      <div class="spacer"></div>
+      <button class="btn btn-primary hidden" id="addHireBtn">+ New Hire</button>
+    </div>
+
+    <div class="toolbar export-row">
+      <strong style="font-size:13px;color:var(--navy);">Export to Excel:</strong>
+      <select id="exportMonth"></select>
+      <select id="exportYear"></select>
+      <button class="btn btn-outline" id="exportBtn">Export Month</button>
+      <button class="btn btn-outline" id="exportAllBtn">Export All</button>
+    </div>
+
+    <div style="overflow-x:auto;">
+      <table>
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>Hirer</th>
+            <th>Contact</th>
+            <th>Room/s</th>
+            <th>Time</th>
+            <th>Total Fee</th>
+            <th>Deposit</th>
+            <th>Balance</th>
+            <th>Agreement</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody id="tableBody"></tbody>
+      </table>
+      <div class="empty-state hidden" id="emptyState">No hires match your filters.</div>
+    </div>
+  </main>
+</div>
+
+<!-- ================= MODAL ================= -->
+<div id="modalOverlay" class="hidden">
+  <div id="hireModal">
+    <h2 id="modalTitle">New Hire</h2>
+    <div class="modal-sub" id="modalSub"></div>
+
+    <fieldset id="bookingFieldset">
+      <legend>Booking Details</legend>
+      <div class="form-grid">
+        <div class="field"><label>Date of Hire</label><input type="date" id="f_date" /></div>
+        <div class="field"><label>Room/s</label>
+          <input type="text" id="f_rooms" list="roomOptions" placeholder="e.g. Lakeside Lounge West" />
+          <datalist id="roomOptions">
+            <option value="Lakeside Lounge West"></option>
+            <option value="Boardroom"></option>
+            <option value="Youth Centre"></option>
+            <option value="Kids Hall (East, West, Kitchen)"></option>
+            <option value="Auditorium"></option>
+          </datalist>
+        </div>
+        <div class="field"><label>Hirer</label><input type="text" id="f_hirer" /></div>
+        <div class="field"><label>Contact Name</label><input type="text" id="f_contact" /></div>
+        <div class="field"><label>Email</label><input type="email" id="f_email" /></div>
+        <div class="field"><label>Phone Number</label><input type="text" id="f_phone" /></div>
+        <div class="field"><label>Booking Time</label><input type="text" id="f_time" placeholder="e.g. 8:30am – 4:30pm" /></div>
+        <div class="field"><label>Required Equipment</label><input type="text" id="f_equipment" /></div>
+        <div class="field full"><label>Additional Notes</label><textarea id="f_notes"></textarea></div>
+        <div class="field"><label>Total Hire Fee (ex GST)</label><input type="number" step="0.01" id="f_total" /></div>
+        <div class="field"><label>Deposit Amount (ex GST)</label><input type="number" step="0.01" id="f_deposit" /></div>
+        <div class="field"><label>Balance Amount (ex GST)</label><input type="number" step="0.01" id="f_balance" /></div>
+        <div class="field">
+          <label>Venue Hire Agreement</label>
+          <input type="file" id="f_agreementFile" accept=".pdf,.doc,.docx,.jpg,.png" />
+          <div class="current-file" id="currentFileLink"></div>
+        </div>
+      </div>
+      <div class="checkline" style="margin-top:12px;">
+        <input type="checkbox" id="f_cancelled" />
+        <label for="f_cancelled">Mark this hire as Cancelled</label>
+      </div>
+    </fieldset>
+
+    <fieldset id="invoicingFieldset">
+      <legend>Invoicing (Finance)</legend>
+      <div class="form-grid">
+        <div class="field"><label>Deposit Invoice #</label><input type="text" id="f_depositInvNum" /></div>
+        <div class="field"><label>Balance Invoice #</label><input type="text" id="f_balanceInvNum" /></div>
+      </div>
+      <div class="checkline"><input type="checkbox" id="f_depositInvoiceSent" /><label for="f_depositInvoiceSent">Deposit Invoice Sent</label></div>
+      <div class="checkline"><input type="checkbox" id="f_depositPaid" /><label for="f_depositPaid">Deposit Paid</label></div>
+      <div class="checkline"><input type="checkbox" id="f_balanceInvoiceSent" /><label for="f_balanceInvoiceSent">Balance Invoice Sent</label></div>
+      <div class="checkline"><input type="checkbox" id="f_balancePaid" /><label for="f_balancePaid">Balance Paid</label></div>
+      <div class="field full"><label>Invoicing Notes</label><textarea id="f_invNotes"></textarea></div>
+    </fieldset>
+
+    <div class="modal-footer">
+      <div class="left">
+        <button class="btn btn-danger hidden" id="deleteHireBtn">Delete</button>
+      </div>
+      <div class="right">
+        <button class="btn btn-outline" id="cancelModalBtn">Cancel</button>
+        <button class="btn btn-primary" id="saveHireBtn">Save</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="toast" class="hidden"></div>
+
+<script type="module">
+/* =========================================================================
+   NEWLIFE VENUE HIRE — CONFIG
+   Fill this in with your own Firebase project's config (see SETUP_GUIDE.md).
+   ========================================================================= */
+const firebaseConfig = {
+  apiKey: "AIzaSyBYAOOq6gfB9MLGn1Hgxcs0veQTabzy-yo",
+  authDomain: "newlife-venue-hire.firebaseapp.com",
+  projectId: "newlife-venue-hire",
+  storageBucket: "newlife-venue-hire.firebasestorage.app",
+  messagingSenderId: "749321281234",
+  appId: "1:749321281234:web:7268b9e771b46c16bd570b",
+  measurementId: "G-1ZJVQJTM4S"
+};
+
+// Initialize Firebase
+const app = initializeApp(firebaseConfig);
+const analytics = getAnalytics(app);
+  
+};
+
+// Fixed login emails behind each role button. Create these two accounts
+// in Firebase Authentication (Email/Password) — see SETUP_GUIDE.md.
+const ROLE_EMAILS = {
+  simon: "simon@newlifevenuehire.app",
+  finance: "finance@newlifevenuehire.app"
+};
+
+/* ========================================================================= */
+
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.17.1/firebase-app.js";
+import {
+  getAuth, setPersistence, browserLocalPersistence,
+  signInWithEmailAndPassword, onAuthStateChanged, signOut
+} from "https://www.gstatic.com/firebasejs/12.17.1/firebase-auth.js";
+import {
+  getFirestore, collection, addDoc, updateDoc, deleteDoc, doc,
+  onSnapshot, query, orderBy, serverTimestamp
+} from "https://www.gstatic.com/firebasejs/12.17.1/firebase-firestore.js";
+import {
+  getStorage, ref, uploadBytes, getDownloadURL, deleteObject
+} from "https://www.gstatic.com/firebasejs/12.17.1/firebase-storage.js";
+
+let app, auth, db, storage;
+let firebaseReady = false;
+try {
+  if (firebaseConfig.apiKey !== "REPLACE_ME") {
+    app = initializeApp(firebaseConfig);
+    auth = getAuth(app);
+    db = getFirestore(app);
+    storage = getStorage(app);
+    firebaseReady = true;
+  }
+} catch (e) {
+  console.error("Firebase init failed", e);
+}
+
+if (!firebaseReady) {
+  document.getElementById("loginConfigWarning").classList.remove("hidden");
+}
+
+/* ---------------- State ---------------- */
+let currentRole = null;       // 'simon' | 'finance'
+let selectedLoginRole = null; // role chosen on the login screen before password entry
+let allHires = [];            // live cache of all hire docs from Firestore
+let editingId = null;         // id of hire currently open in modal, or null for "new"
+let activeChip = "all";
+
+/* ---------------- Login screen ---------------- */
+document.querySelectorAll(".role-btn").forEach(btn => {
+  btn.addEventListener("click", () => {
+    document.querySelectorAll(".role-btn").forEach(b => b.classList.remove("active"));
+    btn.classList.add("active");
+    selectedLoginRole = btn.dataset.role;
+    document.getElementById("passwordSection").classList.remove("hidden");
+    document.getElementById("passwordInput").focus();
+    document.getElementById("loginError").textContent = "";
+  });
+});
+
+document.getElementById("passwordInput").addEventListener("keydown", (e) => {
+  if (e.key === "Enter") doLogin();
+});
+document.getElementById("loginBtn").addEventListener("click", doLogin);
+
+async function doLogin() {
+  const errEl = document.getElementById("loginError");
+  errEl.textContent = "";
+  if (!firebaseReady) {
+    errEl.textContent = "Firebase isn't configured yet — see the warning above.";
+    return;
+  }
+  if (!selectedLoginRole) {
+    errEl.textContent = "Choose Simon or Finance first.";
+    return;
+  }
+  const password = document.getElementById("passwordInput").value;
+  if (!password) {
+    errEl.textContent = "Enter the password.";
+    return;
+  }
+  const email = ROLE_EMAILS[selectedLoginRole];
+  try {
+    await setPersistence(auth, browserLocalPersistence);
+    await signInWithEmailAndPassword(auth, email, password);
+    // onAuthStateChanged will take it from here
+  } catch (e) {
+    console.error(e);
+    errEl.textContent = "Incorrect password, or that account doesn't exist yet.";
+  }
+}
+
+document.getElementById("logoutBtn").addEventListener("click", () => {
+  signOut(auth);
+});
+
+/* ---------------- Auth state routing ---------------- */
+if (firebaseReady) {
+  onAuthStateChanged(auth, (user) => {
+    if (user) {
+      const email = (user.email || "").toLowerCase();
+      currentRole = Object.keys(ROLE_EMAILS).find(r => ROLE_EMAILS[r].toLowerCase() === email) || null;
+      if (!currentRole) {
+        // Unknown account signed in somehow — sign them back out.
+        signOut(auth);
+        return;
+      }
+      showApp();
+    } else {
+      currentRole = null;
+      showLogin();
+    }
+  });
+}
+
+function showLogin() {
+  document.getElementById("loginScreen").classList.remove("hidden");
+  document.getElementById("appScreen").classList.add("hidden");
+  document.getElementById("passwordInput").value = "";
+}
+
+function showApp() {
+  document.getElementById("loginScreen").classList.add("hidden");
+  document.getElementById("appScreen").classList.remove("hidden");
+  document.getElementById("roleTag").textContent = currentRole === "simon" ? "Venue Hire" : "Finance";
+  document.getElementById("whoLabel").textContent = currentRole === "simon" ? "Simon" : "Finance (Cody)";
+  document.getElementById("addHireBtn").classList.toggle("hidden", currentRole !== "simon");
+  subscribeHires();
+}
+
+/* ---------------- Firestore live data ---------------- */
+function subscribeHires() {
+  const q = query(collection(db, "hires"), orderBy("dateOfHire", "asc"));
+  onSnapshot(q, (snap) => {
+    allHires = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    populateFilterOptions();
+    renderStats();
+    renderTable();
+  }, (err) => {
+    console.error(err);
+    toast("Couldn't load hires — check Firestore rules / connection.");
+  });
+}
+
+/* ---------------- Filters ---------------- */
+document.getElementById("searchInput").addEventListener("input", renderTable);
+document.getElementById("roomFilter").addEventListener("change", renderTable);
+document.getElementById("monthFilter").addEventListener("change", renderTable);
+document.querySelectorAll(".chip").forEach(chip => {
+  chip.addEventListener("click", () => {
+    activeChip = chip.dataset.filter;
+    document.querySelectorAll(".chip").forEach(c => c.classList.remove("active"));
+    chip.classList.add("active");
+    renderTable();
+  });
+});
+document.querySelector('.chip[data-filter="all"]').classList.add("active");
+
+function populateFilterOptions() {
+  const roomSel = document.getElementById("roomFilter");
+  const existing = new Set(Array.from(roomSel.options).map(o => o.value));
+  const rooms = [...new Set(allHires.map(h => h.rooms).filter(Boolean))].sort();
+  rooms.forEach(r => {
+    if (!existing.has(r)) {
+      const opt = document.createElement("option");
+      opt.value = r; opt.textContent = r;
+      roomSel.appendChild(opt);
+    }
+  });
+
+  const monthSel = document.getElementById("monthFilter");
+  if (monthSel.options.length <= 1) {
+    const months = [...new Set(allHires.map(h => (h.dateOfHire || "").slice(0,7)).filter(Boolean))].sort();
+    months.forEach(m => {
+      const opt = document.createElement("option");
+      opt.value = m; opt.textContent = formatMonthYear(m);
+      monthSel.appendChild(opt);
+    });
+  }
+}
+
+function formatMonthYear(ym) {
+  if (!ym) return "";
+  const [y, m] = ym.split("-");
+  const d = new Date(Number(y), Number(m) - 1, 1);
+  return d.toLocaleDateString(undefined, { month: "long", year: "numeric" });
+}
+
+function getFilteredHires() {
+  const search = document.getElementById("searchInput").value.trim().toLowerCase();
+  const room = document.getElementById("roomFilter").value;
+  const month = document.getElementById("monthFilter").value;
+  const today = new Date().toISOString().slice(0, 10);
+
+  return allHires.filter(h => {
+    if (search) {
+      const hay = [h.hirer, h.contactName, h.email, h.phone].join(" ").toLowerCase();
+      if (!hay.includes(search)) return false;
+    }
+    if (room && h.rooms !== room) return false;
+    if (month && (h.dateOfHire || "").slice(0,7) !== month) return false;
+
+    switch (activeChip) {
+      case "needsDeposit":
+        if (h.cancelled || h.depositInvoiceSent) return false;
+        break;
+      case "needsBalance":
+        if (h.cancelled || h.balanceInvoiceSent) return false;
+        break;
+      case "fullyPaid":
+        if (!(h.depositPaid && h.balancePaid)) return false;
+        break;
+      case "upcoming":
+        if (h.cancelled || (h.dateOfHire || "") < today) return false;
+        break;
+      case "cancelled":
+        if (!h.cancelled) return false;
+        break;
+      default: break;
+    }
+    return true;
+  });
+}
+
+/* ---------------- Stats ---------------- */
+function renderStats() {
+  const active = allHires.filter(h => !h.cancelled);
+  const needsDeposit = active.filter(h => !h.depositInvoiceSent).length;
+  const needsBalance = active.filter(h => !h.balanceInvoiceSent).length;
+  const outstanding = active.filter(h => (h.depositInvoiceSent && !h.depositPaid) || (h.balanceInvoiceSent && !h.balancePaid)).length;
+  const today = new Date().toISOString().slice(0,10);
+  const upcoming = active.filter(h => (h.dateOfHire || "") >= today).length;
+
+  const cards = [
+    { num: active.length, lbl: "Active Hires" },
+    { num: needsDeposit, lbl: "Need Deposit Invoice" },
+    { num: needsBalance, lbl: "Need Balance Invoice" },
+    { num: outstanding, lbl: "Awaiting Payment" },
+    { num: upcoming, lbl: "Upcoming" },
+  ];
+  document.getElementById("statsRow").innerHTML = cards.map(c =>
+    `<div class="stat-card"><div class="num">${c.num}</div><div class="lbl">${c.lbl}</div></div>`
+  ).join("");
+}
+
+/* ---------------- Table ---------------- */
+function renderTable() {
+  const rows = getFilteredHires();
+  const tbody = document.getElementById("tableBody");
+  document.getElementById("emptyState").classList.toggle("hidden", rows.length !== 0);
+
+  tbody.innerHTML = rows.map(h => {
+    const depositBadge = h.depositPaid
+      ? `<span class="badge yes">Paid</span>`
+      : h.depositInvoiceSent ? `<span class="badge no">Invoiced</span>` : `<span class="badge no">Pending</span>`;
+    const balanceBadge = h.balancePaid
+      ? `<span class="badge yes">Paid</span>`
+      : h.balanceInvoiceSent ? `<span class="badge no">Invoiced</span>` : `<span class="badge no">Pending</span>`;
+    const agreement = h.agreementFileURL
+      ? `<a class="agreement-link" href="${h.agreementFileURL}" target="_blank" rel="noopener">View</a>`
+      : `<span style="color:var(--muted);font-size:12px;">—</span>`;
+    const cancelledTag = h.cancelled ? ` <span class="badge cancelled">Cancelled</span>` : "";
+
+    return `<tr class="${h.cancelled ? "cancelled" : ""}" data-id="${h.id}">
+      <td>${formatDate(h.dateOfHire)}</td>
+      <td>${escapeHtml(h.hirer || "")}${cancelledTag}</td>
+      <td>${escapeHtml(h.contactName || "")}<br><span style="color:var(--muted);font-size:11.5px;">${escapeHtml(h.email || "")}</span></td>
+      <td>${escapeHtml(h.rooms || "")}</td>
+      <td>${escapeHtml(h.bookingTime || "")}</td>
+      <td>$${Number(h.totalHireFee || 0).toFixed(2)}</td>
+      <td>${depositBadge}</td>
+      <td>${balanceBadge}</td>
+      <td>${agreement}</td>
+      <td class="row-actions"><button data-action="edit" data-id="${h.id}">${currentRole === "simon" ? "Edit" : "Invoicing"}</button></td>
+    </tr>`;
+  }).join("");
+
+  tbody.querySelectorAll('button[data-action="edit"]').forEach(btn => {
+    btn.addEventListener("click", () => openModal(btn.dataset.id));
+  });
+}
+
+function formatDate(iso) {
+  if (!iso) return "";
+  const [y,m,d] = iso.split("-");
+  return `${d}/${m}/${y}`;
+}
+function escapeHtml(str) {
+  return String(str).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+}
+
+/* ---------------- Modal: open / close ---------------- */
+document.getElementById("addHireBtn").addEventListener("click", () => openModal(null));
+document.getElementById("cancelModalBtn").addEventListener("click", closeModal);
+document.getElementById("modalOverlay").addEventListener("click", (e) => {
+  if (e.target.id === "modalOverlay") closeModal();
+});
+
+function openModal(id) {
+  editingId = id;
+  const hire = id ? allHires.find(h => h.id === id) : null;
+
+  document.getElementById("modalTitle").textContent = id ? "Edit Hire" : "New Hire";
+  document.getElementById("modalSub").textContent = id
+    ? `Created ${hire && hire.createdAt && hire.createdAt.toDate ? hire.createdAt.toDate().toLocaleString() : ""}`
+    : "Fill in the booking details below.";
+
+  document.getElementById("f_date").value = hire?.dateOfHire || "";
+  document.getElementById("f_rooms").value = hire?.rooms || "";
+  document.getElementById("f_hirer").value = hire?.hirer || "";
+  document.getElementById("f_contact").value = hire?.contactName || "";
+  document.getElementById("f_email").value = hire?.email || "";
+  document.getElementById("f_phone").value = hire?.phone || "";
+  document.getElementById("f_time").value = hire?.bookingTime || "";
+  document.getElementById("f_equipment").value = hire?.requiredEquipment || "";
+  document.getElementById("f_notes").value = hire?.additionalNotes || "";
+  document.getElementById("f_total").value = hire?.totalHireFee ?? "";
+  document.getElementById("f_deposit").value = hire?.depositAmount ?? "";
+  document.getElementById("f_balance").value = hire?.balanceAmount ?? "";
+  document.getElementById("f_cancelled").checked = !!hire?.cancelled;
+  document.getElementById("f_agreementFile").value = "";
+  document.getElementById("currentFileLink").innerHTML = hire?.agreementFileURL
+    ? `Current file: <a class="agreement-link" href="${hire.agreementFileURL}" target="_blank" rel="noopener">${escapeHtml(hire.agreementFileName || "view")}</a>`
+    : "No file uploaded yet.";
+
+  document.getElementById("f_depositInvNum").value = hire?.depositInvoiceNumber || "";
+  document.getElementById("f_balanceInvNum").value = hire?.balanceInvoiceNumber || "";
+  document.getElementById("f_depositInvoiceSent").checked = !!hire?.depositInvoiceSent;
+  document.getElementById("f_depositPaid").checked = !!hire?.depositPaid;
+  document.getElementById("f_balanceInvoiceSent").checked = !!hire?.balanceInvoiceSent;
+  document.getElementById("f_balancePaid").checked = !!hire?.balancePaid;
+  document.getElementById("f_invNotes").value = hire?.invoicingNotes || "";
+
+  // Role-based editability: Simon owns booking details, Finance owns invoicing.
+  const bookingIds = ["f_date","f_rooms","f_hirer","f_contact","f_email","f_phone","f_time","f_equipment","f_notes","f_total","f_deposit","f_balance","f_agreementFile","f_cancelled"];
+  const invoicingIds = ["f_depositInvNum","f_balanceInvNum","f_depositInvoiceSent","f_depositPaid","f_balanceInvoiceSent","f_balancePaid","f_invNotes"];
+  const bookingEditable = currentRole === "simon";
+  const invoicingEditable = currentRole === "finance";
+  bookingIds.forEach(fid => setFieldEnabled(fid, bookingEditable));
+  invoicingIds.forEach(fid => setFieldEnabled(fid, invoicingEditable));
+
+  document.getElementById("deleteHireBtn").classList.toggle("hidden", !(id && currentRole === "simon"));
+
+  document.getElementById("modalOverlay").classList.remove("hidden");
+}
+
+function setFieldEnabled(fieldId, enabled) {
+  const el = document.getElementById(fieldId);
+  el.disabled = !enabled;
+  el.closest(".field")?.classList.toggle("disabled", !enabled);
+}
+
+function closeModal() {
+  document.getElementById("modalOverlay").classList.add("hidden");
+  editingId = null;
+}
+
+/* ---------------- Modal: save ---------------- */
+document.getElementById("saveHireBtn").addEventListener("click", saveHire);
+
+async function saveHire() {
+  if (!firebaseReady) { toast("Firebase isn't configured."); return; }
+
+  const data = {};
+
+  if (currentRole === "simon") {
+    data.dateOfHire = document.getElementById("f_date").value;
+    data.rooms = document.getElementById("f_rooms").value.trim();
+    data.hirer = document.getElementById("f_hirer").value.trim();
+    data.contactName = document.getElementById("f_contact").value.trim();
+    data.email = document.getElementById("f_email").value.trim();
+    data.phone = document.getElementById("f_phone").value.trim();
+    data.bookingTime = document.getElementById("f_time").value.trim();
+    data.requiredEquipment = document.getElementById("f_equipment").value.trim();
+    data.additionalNotes = document.getElementById("f_notes").value.trim();
+    data.totalHireFee = parseFloat(document.getElementById("f_total").value) || 0;
+    data.depositAmount = parseFloat(document.getElementById("f_deposit").value) || 0;
+    data.balanceAmount = parseFloat(document.getElementById("f_balance").value) || 0;
+    data.cancelled = document.getElementById("f_cancelled").checked;
+
+    if (!data.dateOfHire || !data.hirer) {
+      toast("Date of Hire and Hirer are required.");
+      return;
+    }
+  }
+
+  if (currentRole === "finance") {
+    data.depositInvoiceNumber = document.getElementById("f_depositInvNum").value.trim();
+    data.balanceInvoiceNumber = document.getElementById("f_balanceInvNum").value.trim();
+    data.depositInvoiceSent = document.getElementById("f_depositInvoiceSent").checked;
+    data.depositPaid = document.getElementById("f_depositPaid").checked;
+    data.balanceInvoiceSent = document.getElementById("f_balanceInvoiceSent").checked;
+    data.balancePaid = document.getElementById("f_balancePaid").checked;
+    data.invoicingNotes = document.getElementById("f_invNotes").value.trim();
+  }
+
+  data.updatedAt = serverTimestamp();
+  data.updatedBy = currentRole;
+
+  const saveBtn = document.getElementById("saveHireBtn");
+  saveBtn.disabled = true;
+  saveBtn.textContent = "Saving...";
+
+  try {
+    let hireId = editingId;
+    if (!hireId) {
+      data.createdAt = serverTimestamp();
+      data.createdBy = currentRole;
+      const docRef = await addDoc(collection(db, "hires"), data);
+      hireId = docRef.id;
+    } else {
+      await updateDoc(doc(db, "hires", hireId), data);
+    }
+
+    const fileInput = document.getElementById("f_agreementFile");
+    if (currentRole === "simon" && fileInput.files && fileInput.files[0]) {
+      const file = fileInput.files[0];
+      const fileRef = ref(storage, `agreements/${hireId}/${file.name}`);
+      await uploadBytes(fileRef, file);
+      const url = await getDownloadURL(fileRef);
+      await updateDoc(doc(db, "hires", hireId), {
+        agreementFileURL: url,
+        agreementFileName: file.name
+      });
+    }
+
+    toast("Saved.");
+    closeModal();
+  } catch (e) {
+    console.error(e);
+    toast("Save failed — check Firestore/Storage rules & connection.");
+  } finally {
+    saveBtn.disabled = false;
+    saveBtn.textContent = "Save";
+  }
+}
+
+/* ---------------- Modal: delete ---------------- */
+document.getElementById("deleteHireBtn").addEventListener("click", async () => {
+  if (!editingId) return;
+  if (!confirm("Delete this hire permanently? This cannot be undone. (Consider using 'Cancelled' instead if you want to keep a record.)")) return;
+  try {
+    await deleteDoc(doc(db, "hires", editingId));
+    toast("Hire deleted.");
+    closeModal();
+  } catch (e) {
+    console.error(e);
+    toast("Delete failed.");
+  }
+});
+
+/* ---------------- Export to Excel ---------------- */
+const monthNames = ["January","February","March","April","May","June","July","August","September","October","November","December"];
+function initExportSelectors() {
+  const monthSel = document.getElementById("exportMonth");
+  monthNames.forEach((m, i) => {
+    const opt = document.createElement("option");
+    opt.value = String(i + 1).padStart(2, "0");
+    opt.textContent = m;
+    monthSel.appendChild(opt);
+  });
+  const now = new Date();
+  monthSel.value = String(now.getMonth() + 1).padStart(2, "0");
+
+  const yearSel = document.getElementById("exportYear");
+  for (let y = now.getFullYear() - 2; y <= now.getFullYear() + 2; y++) {
+    const opt = document.createElement("option");
+    opt.value = String(y);
+    opt.textContent = String(y);
+    if (y === now.getFullYear()) opt.selected = true;
+    yearSel.appendChild(opt);
+  }
+}
+initExportSelectors();
+
+document.getElementById("exportBtn").addEventListener("click", () => {
+  const month = document.getElementById("exportMonth").value;
+  const year = document.getElementById("exportYear").value;
+  const prefix = `${year}-${month}`;
+  const rows = allHires.filter(h => (h.dateOfHire || "").startsWith(prefix));
+  exportToExcel(rows, `NewlifeVenueHire_${monthNames[Number(month)-1]}_${year}.xlsx`);
+});
+
+document.getElementById("exportAllBtn").addEventListener("click", () => {
+  exportToExcel(allHires, `NewlifeVenueHire_AllHires_${new Date().toISOString().slice(0,10)}.xlsx`);
+});
+
+function exportToExcel(rows, filename) {
+  if (!rows.length) { toast("No hires found for that period."); return; }
+  const data = rows.map(h => ({
+    "Date of Hire": formatDate(h.dateOfHire),
+    "Hirer": h.hirer || "",
+    "Contact Name": h.contactName || "",
+    "Email": h.email || "",
+    "Phone Number": h.phone || "",
+    "Room/s": h.rooms || "",
+    "Booking Time": h.bookingTime || "",
+    "Required Equipment": h.requiredEquipment || "",
+    "Additional Notes": h.additionalNotes || "",
+    "Total Hire Fee (ex GST)": Number(h.totalHireFee || 0),
+    "Deposit Amount (ex GST)": Number(h.depositAmount || 0),
+    "Balance Amount (ex GST)": Number(h.balanceAmount || 0),
+    "Deposit Invoice #": h.depositInvoiceNumber || "",
+    "Deposit Invoice Sent": h.depositInvoiceSent ? "Y" : "N",
+    "Deposit Paid": h.depositPaid ? "Y" : "N",
+    "Balance Invoice #": h.balanceInvoiceNumber || "",
+    "Balance Invoice Sent": h.balanceInvoiceSent ? "Y" : "N",
+    "Balance Paid": h.balancePaid ? "Y" : "N",
+    "Invoicing Notes": h.invoicingNotes || "",
+    "Cancelled": h.cancelled ? "CANCELLED" : "",
+    "Agreement File": h.agreementFileURL || ""
+  }));
+  const ws = XLSX.utils.json_to_sheet(data);
+  ws["!cols"] = Object.keys(data[0]).map(k => ({ wch: Math.max(14, k.length + 2) }));
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, "Venue Hires");
+  XLSX.writeFile(wb, filename);
+  toast(`Exported ${rows.length} record(s).`);
+}
+
+/* ---------------- Toast ---------------- */
+let toastTimer = null;
+function toast(msg) {
+  const el = document.getElementById("toast");
+  el.textContent = msg;
+  el.classList.remove("hidden");
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => el.classList.add("hidden"), 3200);
+}
+</script>
+</body>
+</html>
