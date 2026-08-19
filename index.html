@@ -28,23 +28,24 @@
     font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
   }
   body.dark{
-    --bg:#0f1720;
-    --card:#182430;
-    --border:#2a3a4a;
-    --text:#e6edf3;
-    --muted:#93a4b3;
-    --blue-tint:#1c3b57;
-    --green-tint:#173a26;
-    --red-tint:#3a1f1c;
-    --amber-tint:#3a2f12;
-    --hover-bg:#1f2d3a;
-    --disabled-bg:#22303d;
+    color-scheme:dark;
+    --bg:#0a0f16;
+    --card:#141d27;
+    --border:#263444;
+    --text:#f2f5f8;
+    --muted:#9aabbb;
+    --blue-tint:#17324c;
+    --green-tint:#123322;
+    --red-tint:#3a1d1a;
+    --amber-tint:#392c10;
+    --hover-bg:#1b2735;
+    --disabled-bg:#1c2733;
   }
   *{box-sizing:border-box;}
   body{margin:0;background:var(--bg);color:var(--text);transition:background .15s,color .15s;}
-  #darkModeBtn{
-    position:fixed;top:14px;right:14px;z-index:200;background:var(--card);border:1px solid var(--border);
-    border-radius:50%;width:38px;height:38px;font-size:16px;box-shadow:0 4px 12px rgba(0,0,0,.15);
+  .dark-toggle-corner{
+    position:absolute;top:14px;right:14px;background:var(--card);border:1px solid var(--border);color:var(--text);
+    border-radius:50%;width:32px;height:32px;font-size:14px;box-shadow:0 4px 12px rgba(0,0,0,.15);
   }
   .hidden{display:none !important;}
   button{font-family:inherit;cursor:pointer;}
@@ -56,15 +57,15 @@
     background:linear-gradient(135deg,var(--navy) 0%,var(--navy-light) 100%);
   }
   .login-card{
-    background:var(--card);width:360px;max-width:90vw;border-radius:12px;
+    position:relative;background:var(--card);width:360px;max-width:90vw;border-radius:12px;
     padding:36px 32px;box-shadow:0 20px 50px rgba(0,0,0,0.35);text-align:center;
   }
-  .login-card h1{font-size:22px;margin:0 0 4px;color:var(--navy);}
+  .login-card h1{font-size:22px;margin:0 0 4px;color:var(--text);}
   .login-card p.sub{color:var(--muted);font-size:13px;margin:0 0 26px;}
   .role-buttons{display:flex;gap:10px;margin-bottom:18px;}
   .role-btn{
     flex:1;padding:14px 8px;border-radius:var(--radius);border:2px solid var(--border);
-    background:#fff;font-weight:600;font-size:14px;color:var(--navy);transition:all .15s;
+    background:var(--card);font-weight:600;font-size:14px;color:var(--text);transition:all .15s;
   }
   .role-btn:hover{border-color:var(--accent);}
   .role-btn.active{border-color:var(--accent);background:var(--blue-tint);}
@@ -72,6 +73,7 @@
   #passwordSection label{font-size:12px;color:var(--muted);display:block;margin-bottom:6px;}
   #passwordInput{
     width:100%;padding:10px 12px;border:1px solid var(--border);border-radius:6px;font-size:14px;margin-bottom:14px;
+    background:var(--card);color:var(--text);
   }
   #loginBtn{
     width:100%;padding:12px;border:none;border-radius:6px;background:var(--accent);color:#fff;
@@ -101,7 +103,7 @@
     background:var(--card);border:1px solid var(--border);border-radius:var(--radius);
     padding:12px 18px;min-width:150px;flex:1;
   }
-  .stat-card .num{font-size:22px;font-weight:700;color:var(--navy);}
+  .stat-card .num{font-size:22px;font-weight:700;color:var(--text);}
   .stat-card .lbl{font-size:11.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;}
 
   .toolbar{
@@ -110,9 +112,10 @@
   }
   .toolbar input[type=text], .toolbar select{
     padding:8px 10px;border:1px solid var(--border);border-radius:6px;font-size:13px;
+    background:var(--card);color:var(--text);
   }
   .chip{
-    padding:6px 13px;border-radius:16px;border:1px solid var(--border);background:#fff;font-size:12.5px;color:var(--navy);font-weight:600;
+    padding:6px 13px;border-radius:16px;border:1px solid var(--border);background:var(--card);font-size:12.5px;color:var(--text);font-weight:600;
   }
   .chip.active{background:var(--accent);color:#fff;border-color:var(--accent);}
   .spacer{flex:1;}
@@ -121,7 +124,7 @@
   }
   .btn-primary{background:var(--accent);color:#fff;}
   .btn-primary:hover{background:var(--accent-dark);}
-  .btn-outline{background:#fff;border:1px solid var(--border);color:var(--navy);}
+  .btn-outline{background:var(--card);border:1px solid var(--border);color:var(--text);}
   .btn-outline:hover{border-color:var(--accent);}
   .btn-danger{background:var(--red);color:#fff;}
 
@@ -139,7 +142,7 @@
   .badge.no{background:var(--red-tint);color:var(--red);}
   .badge.cancelled{background:var(--red-tint);color:var(--red);}
   .row-actions button{
-    background:none;border:1px solid var(--border);border-radius:5px;padding:4px 9px;font-size:12px;margin-right:4px;color:var(--navy);
+    background:var(--card);border:1px solid var(--border);border-radius:5px;padding:4px 9px;font-size:12px;margin-right:4px;color:var(--text);
   }
   .row-actions button:hover{border-color:var(--accent);}
   .agreement-link{font-size:12px;color:var(--accent);text-decoration:none;}
@@ -151,20 +154,21 @@
     padding:40px 16px;overflow-y:auto;z-index:50;
   }
   #hireModal{
-    background:#fff;border-radius:10px;width:720px;max-width:100%;padding:26px 28px 20px;
+    background:var(--card);border-radius:10px;width:720px;max-width:100%;padding:26px 28px 20px;
   }
-  #hireModal h2{margin:0 0 4px;font-size:18px;color:var(--navy);}
+  #hireModal h2{margin:0 0 4px;font-size:18px;color:var(--text);}
   #hireModal .modal-sub{font-size:12px;color:var(--muted);margin-bottom:18px;}
   .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px 16px;}
   .form-grid .full{grid-column:1/-1;}
   .field label{display:block;font-size:11.5px;color:var(--muted);margin-bottom:4px;font-weight:600;text-transform:uppercase;letter-spacing:.3px;}
   .field input, .field select, .field textarea{
     width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:6px;font-size:13.5px;
+    background:var(--card);color:var(--text);
   }
   .field textarea{resize:vertical;min-height:44px;}
   .field.disabled input, .field.disabled textarea, .field.disabled select{background:var(--disabled-bg);color:var(--muted);}
   fieldset{border:1px solid var(--border);border-radius:8px;padding:14px 16px 16px;margin:16px 0 0;}
-  fieldset legend{font-size:12px;font-weight:700;color:var(--navy);padding:0 6px;text-transform:uppercase;letter-spacing:.4px;}
+  fieldset legend{font-size:12px;font-weight:700;color:var(--accent);padding:0 6px;text-transform:uppercase;letter-spacing:.4px;}
   .checkline{display:flex;align-items:center;gap:8px;margin-bottom:8px;}
   .checkline input[type=checkbox]{width:16px;height:16px;}
   .checkline label{font-size:12.5px;color:var(--text);font-weight:600;margin:0;}
@@ -180,11 +184,10 @@
 </head>
 <body>
 
-<button id="darkModeBtn" title="Toggle dark mode">🌙</button>
-
 <!-- ================= LOGIN ================= -->
 <div id="loginScreen">
   <div class="login-card">
+    <button class="dark-toggle-corner" id="darkToggleLogin" title="Toggle dark mode">🌙</button>
     <h1>Newlife Venue Hire</h1>
     <p class="sub">Sign in to continue</p>
     <div class="role-buttons">
@@ -212,6 +215,7 @@
     </div>
     <div class="who">
       <span id="whoLabel"></span>
+      <button id="darkToggleHeader" title="Toggle dark mode">🌙</button>
       <button id="logoutBtn">Log out</button>
     </div>
   </header>
@@ -237,7 +241,7 @@
     </div>
 
     <div class="toolbar export-row">
-      <strong style="font-size:13px;color:var(--navy);">Export to Excel:</strong>
+      <strong style="font-size:13px;color:var(--text);">Export to Excel:</strong>
       <select id="exportMonth"></select>
       <select id="exportYear"></select>
       <button class="btn btn-outline" id="exportBtn">Export Month</button>
@@ -483,16 +487,19 @@ function showApp() {
 }
 
 /* ---------------- Dark mode ---------------- */
-const darkModeBtn = document.getElementById("darkModeBtn");
+const darkToggleBtns = [document.getElementById("darkToggleLogin"), document.getElementById("darkToggleHeader")];
 function applyDarkMode(on) {
   document.body.classList.toggle("dark", on);
-  darkModeBtn.textContent = on ? "☀️" : "🌙";
+  darkToggleBtns.forEach(btn => { if (btn) btn.textContent = on ? "☀️" : "🌙"; });
 }
 applyDarkMode(localStorage.getItem("nvh_dark") === "1");
-darkModeBtn.addEventListener("click", () => {
-  const isDark = !document.body.classList.contains("dark");
-  applyDarkMode(isDark);
-  localStorage.setItem("nvh_dark", isDark ? "1" : "0");
+darkToggleBtns.forEach(btn => {
+  if (!btn) return;
+  btn.addEventListener("click", () => {
+    const isDark = !document.body.classList.contains("dark");
+    applyDarkMode(isDark);
+    localStorage.setItem("nvh_dark", isDark ? "1" : "0");
+  });
 });
 
 /* ---------------- Firestore live data ---------------- */
