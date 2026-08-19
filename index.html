@@ -22,11 +22,30 @@
     --red:#c0392b;
     --red-tint:#fbe1de;
     --amber-tint:#fdf1d6;
+    --hover-bg:#f8fafc;
+    --disabled-bg:#f1f3f5;
     --radius:8px;
     font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
   }
+  body.dark{
+    --bg:#0f1720;
+    --card:#182430;
+    --border:#2a3a4a;
+    --text:#e6edf3;
+    --muted:#93a4b3;
+    --blue-tint:#1c3b57;
+    --green-tint:#173a26;
+    --red-tint:#3a1f1c;
+    --amber-tint:#3a2f12;
+    --hover-bg:#1f2d3a;
+    --disabled-bg:#22303d;
+  }
   *{box-sizing:border-box;}
-  body{margin:0;background:var(--bg);color:var(--text);}
+  body{margin:0;background:var(--bg);color:var(--text);transition:background .15s,color .15s;}
+  #darkModeBtn{
+    position:fixed;top:14px;right:14px;z-index:200;background:var(--card);border:1px solid var(--border);
+    border-radius:50%;width:38px;height:38px;font-size:16px;box-shadow:0 4px 12px rgba(0,0,0,.15);
+  }
   .hidden{display:none !important;}
   button{font-family:inherit;cursor:pointer;}
   input,select,textarea{font-family:inherit;}
@@ -113,7 +132,7 @@
     background:var(--navy);color:#fff;text-align:left;padding:10px 10px;font-size:11.5px;text-transform:uppercase;letter-spacing:.3px;
   }
   tbody td{padding:10px 10px;font-size:13px;border-bottom:1px solid var(--border);vertical-align:top;}
-  tbody tr:hover{background:#f8fafc;}
+  tbody tr:hover{background:var(--hover-bg);}
   tbody tr.cancelled td{color:var(--muted);text-decoration:line-through;}
   .badge{display:inline-block;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:700;}
   .badge.yes{background:var(--green-tint);color:var(--green);}
@@ -143,7 +162,7 @@
     width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:6px;font-size:13.5px;
   }
   .field textarea{resize:vertical;min-height:44px;}
-  .field.disabled input, .field.disabled textarea, .field.disabled select{background:#f1f3f5;color:var(--muted);}
+  .field.disabled input, .field.disabled textarea, .field.disabled select{background:var(--disabled-bg);color:var(--muted);}
   fieldset{border:1px solid var(--border);border-radius:8px;padding:14px 16px 16px;margin:16px 0 0;}
   fieldset legend{font-size:12px;font-weight:700;color:var(--navy);padding:0 6px;text-transform:uppercase;letter-spacing:.4px;}
   .checkline{display:flex;align-items:center;gap:8px;margin-bottom:8px;}
@@ -160,6 +179,8 @@
 </style>
 </head>
 <body>
+
+<button id="darkModeBtn" title="Toggle dark mode">🌙</button>
 
 <!-- ================= LOGIN ================= -->
 <div id="loginScreen">
@@ -209,6 +230,9 @@
       <span class="chip" data-filter="upcoming">Upcoming</span>
       <span class="chip" data-filter="cancelled">Cancelled</span>
       <div class="spacer"></div>
+      <button class="btn btn-outline hidden" id="downloadTemplateBtn">CSV Template</button>
+      <button class="btn btn-outline hidden" id="importCsvBtn">Import CSV</button>
+      <input type="file" id="importCsvFile" accept=".csv" class="hidden" />
       <button class="btn btn-primary hidden" id="addHireBtn">+ New Hire</button>
     </div>
 
@@ -327,8 +351,6 @@ const firebaseConfig = {
   measurementId: "G-1ZJVQJTM4S"
 };
 
-
-
 // Fixed login emails behind each role button. Create these two accounts
 // in Firebase Authentication (Email/Password) — see SETUP_GUIDE.md.
 const ROLE_EMAILS = {
@@ -345,7 +367,7 @@ import {
 } from "https://www.gstatic.com/firebasejs/12.17.1/firebase-auth.js";
 import {
   getFirestore, collection, addDoc, updateDoc, deleteDoc, doc,
-  onSnapshot, query, orderBy, serverTimestamp
+  onSnapshot, query, orderBy, serverTimestamp, writeBatch
 } from "https://www.gstatic.com/firebasejs/12.17.1/firebase-firestore.js";
 import {
   getStorage, ref, uploadBytes, getDownloadURL, deleteObject
@@ -455,8 +477,23 @@ function showApp() {
   document.getElementById("roleTag").textContent = currentRole === "simon" ? "Venue Hire" : "Finance";
   document.getElementById("whoLabel").textContent = currentRole === "simon" ? "Simon" : "Finance (Cody)";
   document.getElementById("addHireBtn").classList.toggle("hidden", currentRole !== "simon");
+  document.getElementById("importCsvBtn").classList.toggle("hidden", currentRole !== "simon");
+  document.getElementById("downloadTemplateBtn").classList.toggle("hidden", currentRole !== "simon");
   subscribeHires();
 }
+
+/* ---------------- Dark mode ---------------- */
+const darkModeBtn = document.getElementById("darkModeBtn");
+function applyDarkMode(on) {
+  document.body.classList.toggle("dark", on);
+  darkModeBtn.textContent = on ? "☀️" : "🌙";
+}
+applyDarkMode(localStorage.getItem("nvh_dark") === "1");
+darkModeBtn.addEventListener("click", () => {
+  const isDark = !document.body.classList.contains("dark");
+  applyDarkMode(isDark);
+  localStorage.setItem("nvh_dark", isDark ? "1" : "0");
+});
 
 /* ---------------- Firestore live data ---------------- */
 function subscribeHires() {
@@ -846,6 +883,186 @@ function exportToExcel(rows, filename) {
   XLSX.utils.book_append_sheet(wb, ws, "Venue Hires");
   XLSX.writeFile(wb, filename);
   toast(`Exported ${rows.length} record(s).`);
+}
+
+/* ---------------- CSV Import (Simon) ---------------- */
+const IMPORT_TEMPLATE_HEADERS = ["Date of Hire","Hirer","Contact Name","Email","Phone Number","Room/s","Booking Time","Required Equipment","Additional Notes","Total Hire Fee (ex GST)","Deposit Amount (ex GST)","Balance Amount (ex GST)"];
+const IMPORT_HEADER_MAP = {
+  "date of hire": "dateOfHire",
+  "hirer": "hirer",
+  "contact name": "contactName",
+  "email": "email",
+  "phone number": "phone",
+  "phone": "phone",
+  "room/s": "rooms",
+  "rooms": "rooms",
+  "booking time": "bookingTime",
+  "required equipment": "requiredEquipment",
+  "additional notes": "additionalNotes",
+  "notes": "additionalNotes",
+  "total hire fee (ex gst)": "totalHireFee",
+  "total hire fee": "totalHireFee",
+  "deposit amount (ex gst)": "depositAmount",
+  "deposit amount": "depositAmount",
+  "balance amount (ex gst)": "balanceAmount",
+  "balance amount": "balanceAmount"
+};
+
+function csvEscape(val) {
+  const s = String(val ?? "");
+  return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+}
+
+// Hand-rolled CSV parser (not SheetJS) so date-like cells such as "2026-09-12"
+// come through as plain strings instead of being silently guessed into Excel
+// date serials, which is what XLSX.read() does with CSV input.
+function parseCsvText(text) {
+  const rows = [];
+  let row = [], field = "", inQuotes = false;
+  for (let i = 0; i < text.length; i++) {
+    const c = text[i];
+    if (inQuotes) {
+      if (c === '"') {
+        if (text[i + 1] === '"') { field += '"'; i++; }
+        else { inQuotes = false; }
+      } else {
+        field += c;
+      }
+    } else if (c === '"') {
+      inQuotes = true;
+    } else if (c === ",") {
+      row.push(field); field = "";
+    } else if (c === "\n") {
+      row.push(field); rows.push(row); row = []; field = "";
+    } else if (c === "\r") {
+      // skip; \r\n line endings are handled via the following \n
+    } else {
+      field += c;
+    }
+  }
+  if (field.length || row.length) { row.push(field); rows.push(row); }
+  return rows.filter(r => !(r.length === 1 && r[0].trim() === ""));
+}
+function csvRowsToObjects(rows) {
+  if (!rows.length) return [];
+  const headers = rows[0].map(h => h.trim());
+  return rows.slice(1).map(r => {
+    const obj = {};
+    headers.forEach((h, idx) => { obj[h] = r[idx] !== undefined ? r[idx] : ""; });
+    return obj;
+  });
+}
+
+document.getElementById("downloadTemplateBtn").addEventListener("click", () => {
+  const example = ["2026-09-12","Example Hirer Pty Ltd","Jane Smith","jane@example.com","0400000000","Lakeside Lounge West","9am-1pm","TV, microphone","Bring own signage","220","0","220"];
+  const csv = [IMPORT_TEMPLATE_HEADERS, example].map(r => r.map(csvEscape).join(",")).join("\r\n");
+  const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "NewlifeVenueHire_ImportTemplate.csv";
+  a.click();
+  URL.revokeObjectURL(url);
+  toast("Template downloaded. Dates must be in YYYY-MM-DD format.");
+});
+
+function parseImportDate(raw) {
+  const s = String(raw || "").trim();
+  if (!s) return null;
+  if (/^\d{4}-\d{1,2}-\d{1,2}$/.test(s)) {
+    const [y, m, d] = s.split("-");
+    return `${y}-${m.padStart(2, "0")}-${d.padStart(2, "0")}`;
+  }
+  const dmy = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+  if (dmy) {
+    const [, d, m, y] = dmy;
+    return `${y}-${m.padStart(2, "0")}-${d.padStart(2, "0")}`;
+  }
+  return null;
+}
+
+document.getElementById("importCsvBtn").addEventListener("click", () => {
+  document.getElementById("importCsvFile").click();
+});
+document.getElementById("importCsvFile").addEventListener("change", handleCsvImport);
+
+function handleCsvImport(e) {
+  const file = e.target.files[0];
+  e.target.value = "";
+  if (!file) return;
+  if (!firebaseReady) { toast("Firebase isn't configured."); return; }
+
+  const reader = new FileReader();
+  reader.onload = async (ev) => {
+    let rows;
+    try {
+      rows = csvRowsToObjects(parseCsvText(String(ev.target.result)));
+    } catch (err) {
+      console.error(err);
+      toast("Couldn't read that CSV file.");
+      return;
+    }
+    if (!rows.length) { toast("No rows found in that CSV."); return; }
+
+    const toImport = [];
+    const errors = [];
+    rows.forEach((row, i) => {
+      const mapped = {};
+      Object.keys(row).forEach(k => {
+        const field = IMPORT_HEADER_MAP[k.trim().toLowerCase()];
+        if (field) mapped[field] = row[k];
+      });
+      const rowNum = i + 2; // +1 for 0-index, +1 for header row
+
+      if (!mapped.hirer) { errors.push(`Row ${rowNum}: missing Hirer — skipped.`); return; }
+      const iso = parseImportDate(mapped.dateOfHire);
+      if (!iso) { errors.push(`Row ${rowNum}: missing/unrecognised Date of Hire (use YYYY-MM-DD) — skipped.`); return; }
+
+      toImport.push({
+        dateOfHire: iso,
+        hirer: String(mapped.hirer || "").trim(),
+        contactName: String(mapped.contactName || "").trim(),
+        email: String(mapped.email || "").trim(),
+        phone: String(mapped.phone || "").trim(),
+        rooms: String(mapped.rooms || "").trim(),
+        bookingTime: String(mapped.bookingTime || "").trim(),
+        requiredEquipment: String(mapped.requiredEquipment || "").trim(),
+        additionalNotes: String(mapped.additionalNotes || "").trim(),
+        totalHireFee: parseFloat(mapped.totalHireFee) || 0,
+        depositAmount: parseFloat(mapped.depositAmount) || 0,
+        balanceAmount: parseFloat(mapped.balanceAmount) || 0,
+        cancelled: false,
+        createdAt: serverTimestamp(),
+        createdBy: currentRole,
+        updatedAt: serverTimestamp(),
+        updatedBy: currentRole
+      });
+    });
+
+    if (!toImport.length) {
+      toast("Nothing to import — check the file matches the template.");
+      if (errors.length) console.warn(errors.join("\n"));
+      return;
+    }
+
+    const confirmMsg = `Import ${toImport.length} hire(s)?` + (errors.length ? ` (${errors.length} row(s) will be skipped — see browser console for details)` : "");
+    if (!confirm(confirmMsg)) return;
+
+    try {
+      for (let i = 0; i < toImport.length; i += 450) {
+        const chunk = toImport.slice(i, i + 450);
+        const batch = writeBatch(db);
+        chunk.forEach(data => batch.set(doc(collection(db, "hires")), data));
+        await batch.commit();
+      }
+      toast(`Imported ${toImport.length} hire(s).${errors.length ? ` ${errors.length} row(s) skipped — see console.` : ""}`);
+      if (errors.length) console.warn(errors.join("\n"));
+    } catch (err) {
+      console.error(err);
+      toast("Import failed — check Firestore rules & connection.");
+    }
+  };
+  reader.readAsText(file);
 }
 
 /* ---------------- Toast ---------------- */
