@@ -21,10 +21,13 @@
     --green:#2f9e52;
     --red:#c0392b;
     --red-tint:#fbe1de;
+    --amber:#a15c00;
     --amber-tint:#fdf1d6;
     --hover-bg:#f8fafc;
     --disabled-bg:#f1f3f5;
     --radius:8px;
+    --viz-blue:#2a78d6;
+    --viz-orange:#eb6834;
     font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
   }
   body.dark{
@@ -37,9 +40,12 @@
     --blue-tint:#17324c;
     --green-tint:#123322;
     --red-tint:#3a1d1a;
+    --amber:#e8a33d;
     --amber-tint:#392c10;
     --hover-bg:#1b2735;
     --disabled-bg:#1c2733;
+    --viz-blue:#3987e5;
+    --viz-orange:#d95926;
   }
   *{box-sizing:border-box;}
   body{margin:0;background:var(--bg);color:var(--text);transition:background .15s,color .15s;}
@@ -96,6 +102,11 @@
   header .who button{background:transparent;border:1px solid rgba(255,255,255,.4);color:#fff;padding:6px 12px;border-radius:6px;font-size:12.5px;}
   header .who button:hover{background:rgba(255,255,255,.12);}
 
+  .tabbar{background:var(--navy);padding:0 24px;display:flex;gap:4px;}
+  .tab-btn{background:transparent;border:none;color:rgba(255,255,255,.65);padding:12px 18px;font-size:13px;font-weight:600;border-bottom:2px solid transparent;}
+  .tab-btn:hover{color:#fff;}
+  .tab-btn.active{color:#fff;border-bottom-color:var(--accent);}
+
   main{max-width:1400px;margin:0 auto;padding:20px 24px 60px;}
 
   .stats-row{display:flex;gap:14px;flex-wrap:wrap;margin-bottom:18px;}
@@ -134,30 +145,44 @@
   thead th{
     background:var(--navy);color:#fff;text-align:left;padding:10px 10px;font-size:11.5px;text-transform:uppercase;letter-spacing:.3px;
   }
+  thead th.sortable{cursor:pointer;user-select:none;}
+  thead th.sortable:hover{background:var(--navy-light);}
   tbody td{padding:10px 10px;font-size:13px;border-bottom:1px solid var(--border);vertical-align:top;}
   tbody tr:hover{background:var(--hover-bg);}
-  tbody tr.cancelled td{color:var(--muted);text-decoration:line-through;}
+  tbody tr.cancelled td{color:var(--muted);}
+  tbody tr.archived-row td{opacity:.6;}
   .badge{display:inline-block;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:700;}
   .badge.yes{background:var(--green-tint);color:var(--green);}
   .badge.no{background:var(--red-tint);color:var(--red);}
   .badge.cancelled{background:var(--red-tint);color:var(--red);}
+  .pill{display:inline-block;padding:3px 10px;border-radius:12px;font-size:11.5px;font-weight:700;white-space:nowrap;}
+  .pill.overdue{background:var(--red-tint);color:var(--red);}
+  .pill.amber{background:var(--amber-tint);color:var(--amber);}
+  .pill.neutral{background:var(--hover-bg);color:var(--muted);border:1px solid var(--border);}
+  .pill.green{background:var(--green-tint);color:var(--green);}
   .row-actions button{
     background:var(--card);border:1px solid var(--border);border-radius:5px;padding:4px 9px;font-size:12px;margin-right:4px;color:var(--text);
   }
   .row-actions button:hover{border-color:var(--accent);}
-  .agreement-link{font-size:12px;color:var(--accent);text-decoration:none;}
   .empty-state{padding:40px;text-align:center;color:var(--muted);}
+  .fee-cancelled .orig{text-decoration:line-through;color:var(--muted);}
+  .fee-cancelled .outcome{color:var(--muted);font-size:11px;display:block;}
 
   /* ---------- Modal ---------- */
-  #modalOverlay{
+  #modalOverlay, #hirerModalOverlay, #periodsModalOverlay{
     position:fixed;inset:0;background:rgba(10,20,30,.5);display:flex;align-items:flex-start;justify-content:center;
     padding:40px 16px;overflow-y:auto;z-index:50;
   }
-  #hireModal{
-    background:var(--card);border-radius:10px;width:720px;max-width:100%;padding:26px 28px 20px;
+  #hireModal, #hirerModal, #periodsModal{
+    position:relative;background:var(--card);border-radius:10px;width:720px;max-width:100%;padding:26px 28px 20px;
   }
-  #hireModal h2{margin:0 0 4px;font-size:18px;color:var(--text);}
-  #hireModal .modal-sub{font-size:12px;color:var(--muted);margin-bottom:18px;}
+  .modal-close-x{
+    position:absolute;top:14px;right:14px;background:var(--hover-bg);border:1px solid var(--border);color:var(--text);
+    border-radius:50%;width:30px;height:30px;font-size:16px;line-height:1;display:flex;align-items:center;justify-content:center;
+  }
+  .modal-close-x:hover{border-color:var(--accent);}
+  #hireModal h2, #hirerModal h2, #periodsModal h2{margin:0 0 4px;font-size:18px;color:var(--text);padding-right:36px;}
+  .modal-sub{font-size:12px;color:var(--muted);margin-bottom:18px;}
   .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px 16px;}
   .form-grid .full{grid-column:1/-1;}
   .field label{display:block;font-size:11.5px;color:var(--muted);margin-bottom:4px;font-weight:600;text-transform:uppercase;letter-spacing:.3px;}
@@ -173,13 +198,59 @@
   .checkline input[type=checkbox]{width:16px;height:16px;}
   .checkline label{font-size:12.5px;color:var(--text);font-weight:600;margin:0;}
   .modal-footer{display:flex;justify-content:space-between;align-items:center;margin-top:20px;padding-top:16px;border-top:1px solid var(--border);}
-  .modal-footer .left, .modal-footer .right{display:flex;gap:8px;}
-  .current-file{font-size:12px;margin-top:4px;}
+  .modal-footer .left, .modal-footer .right{display:flex;gap:8px;position:relative;}
+  .delete-popover{
+    position:absolute;bottom:110%;left:0;background:var(--card);border:1px solid var(--border);border-radius:8px;
+    padding:10px;display:flex;gap:8px;box-shadow:0 8px 20px rgba(0,0,0,.25);z-index:30;white-space:nowrap;
+  }
+
+  /* ---------- Recurring / periods ---------- */
+  .adjustments-list{margin:8px 0;}
+  .adjustment-row{display:flex;justify-content:space-between;align-items:center;font-size:12.5px;padding:4px 0;border-bottom:1px dashed var(--border);}
+  .adjustment-row button{background:none;border:none;color:var(--red);font-size:14px;padding:0 4px;}
+  .adjustment-add-row{display:flex;gap:8px;margin-top:8px;}
+  .adjustment-add-row input{flex:1;}
 
   #toast{
     position:fixed;bottom:22px;right:22px;background:var(--navy);color:#fff;padding:12px 18px;border-radius:8px;font-size:13px;
     box-shadow:0 8px 24px rgba(0,0,0,.25);z-index:100;
   }
+
+  /* ---------- Analytics / charts ---------- */
+  #analyticsView{position:relative;}
+  .viz-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:18px 20px;margin-bottom:16px;}
+  .viz-card-head{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:12px;}
+  .viz-card-head h3{margin:0;font-size:14px;color:var(--text);}
+  .viz-legend{display:flex;gap:16px;font-size:12px;color:var(--muted);}
+  .viz-legend .key{display:inline-flex;align-items:center;gap:6px;}
+  .viz-legend .swatch{width:14px;height:2px;border-radius:1px;display:inline-block;}
+  .viz-chart-wrap{position:relative;}
+  #lineChartSvg{width:100%;height:auto;display:block;}
+  .viz-grid-line{stroke:var(--border);stroke-width:1;}
+  .viz-axis-text{fill:var(--muted);font-size:10px;}
+  .viz-line{fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;}
+  .viz-crosshair{stroke:var(--muted);stroke-width:1;stroke-dasharray:3,3;}
+  .viz-endlabel{font-size:11px;font-weight:700;fill:var(--text);}
+  .viz-table table{width:100%;border-collapse:collapse;font-size:13px;}
+  .viz-table th{text-align:left;color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:.3px;padding:6px 8px;border-bottom:1px solid var(--border);}
+  .viz-table td{padding:6px 8px;border-bottom:1px solid var(--border);color:var(--text);}
+  .viz-tooltip{
+    position:absolute;pointer-events:none;background:var(--navy);color:#fff;padding:8px 10px;border-radius:6px;
+    font-size:12px;box-shadow:0 8px 20px rgba(0,0,0,.3);z-index:20;min-width:150px;
+  }
+  .viz-tooltip .tt-title{font-weight:700;margin-bottom:5px;}
+  .viz-tooltip .tt-row{display:flex;align-items:center;justify-content:space-between;gap:10px;}
+  .viz-tooltip .tt-left{display:flex;align-items:center;gap:6px;color:rgba(255,255,255,.75);}
+  .viz-tooltip .tt-key{width:12px;height:2px;display:inline-block;}
+  .viz-tooltip .tt-value{font-weight:700;}
+  .viz-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+  @media (max-width:800px){.viz-grid{grid-template-columns:1fr;}}
+  .bar-chart .bar-row{display:flex;align-items:center;gap:10px;margin-bottom:10px;font-size:12.5px;}
+  .bar-chart .bar-row:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:4px;}
+  .bar-label{width:140px;flex-shrink:0;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .bar-track{flex:1;background:var(--hover-bg);border-radius:4px;height:22px;position:relative;}
+  .bar-fill{background:var(--viz-blue);height:100%;border-radius:0 4px 4px 0;}
+  .bar-value{width:75px;text-align:right;color:var(--muted);flex-shrink:0;font-variant-numeric:tabular-nums;}
 </style>
 </head>
 <body>
@@ -220,19 +291,48 @@
     </div>
   </header>
 
+  <div class="tabbar">
+    <button class="tab-btn active" data-tab="duenow">Due Now</button>
+    <button class="tab-btn" data-tab="bookings">Bookings</button>
+    <button class="tab-btn" data-tab="recurring">Recurring</button>
+    <button class="tab-btn" data-tab="analytics">Analytics</button>
+  </div>
+
   <main>
+
+  <!-- ============ DUE NOW ============ -->
+  <div id="duenowView">
+    <div class="viz-card" style="margin-bottom:16px;">
+      <div class="viz-card-head"><h3>Everything unsent or overdue — one-off and recurring, soonest first.</h3></div>
+    </div>
+    <div style="overflow-x:auto;">
+      <table>
+        <thead>
+          <tr><th>Type</th><th>Hirer</th><th>Detail</th><th>Next Action</th><th>Actions</th></tr>
+        </thead>
+        <tbody id="dueNowTableBody"></tbody>
+      </table>
+      <div class="empty-state hidden" id="dueNowEmptyState">Nothing due — you're all caught up.</div>
+    </div>
+  </div>
+
+  <!-- ============ BOOKINGS ============ -->
+  <div id="bookingsView" class="hidden">
     <div class="stats-row" id="statsRow"></div>
 
     <div class="toolbar">
       <input type="text" id="searchInput" placeholder="Search hirer, contact, email..." style="min-width:220px;" />
       <select id="roomFilter"><option value="">All Rooms</option></select>
       <select id="monthFilter"><option value="">All Time</option></select>
-      <span class="chip" data-filter="all">All</span>
+      <span class="chip active" data-filter="all">All</span>
+      <span class="chip" data-filter="overdue">Overdue</span>
+      <span class="chip" data-filter="dueSoon">Due Soon</span>
       <span class="chip" data-filter="needsDeposit">Needs Deposit Invoice</span>
       <span class="chip" data-filter="needsBalance">Needs Balance Invoice</span>
-      <span class="chip" data-filter="fullyPaid">Fully Paid</span>
+      <span class="chip" data-filter="done">Nothing Outstanding</span>
       <span class="chip" data-filter="upcoming">Upcoming</span>
       <span class="chip" data-filter="cancelled">Cancelled</span>
+      <span class="chip" data-filter="archived">Archived</span>
       <div class="spacer"></div>
       <button class="btn btn-outline hidden" id="downloadTemplateBtn">CSV Template</button>
       <button class="btn btn-outline hidden" id="importCsvBtn">Import CSV</button>
@@ -257,10 +357,9 @@
             <th>Contact</th>
             <th>Room/s</th>
             <th>Time</th>
-            <th>Total Fee</th>
-            <th>Deposit</th>
-            <th>Balance</th>
-            <th>Agreement</th>
+            <th>Ref</th>
+            <th>Fee</th>
+            <th class="sortable" id="thNextAction">Next Action ⇅</th>
             <th>Actions</th>
           </tr>
         </thead>
@@ -268,12 +367,74 @@
       </table>
       <div class="empty-state hidden" id="emptyState">No hires match your filters.</div>
     </div>
+  </div>
+
+  <!-- ============ RECURRING ============ -->
+  <div id="recurringView" class="hidden">
+    <div class="toolbar">
+      <div class="spacer"></div>
+      <button class="btn btn-primary hidden" id="addRecurringHirerBtn">+ New Recurring Hirer</button>
+    </div>
+    <div style="overflow-x:auto;">
+      <table>
+        <thead>
+          <tr>
+            <th>Hirer</th><th>Contact</th><th>Room/s</th><th>Day &amp; Time</th><th>Rate/Session</th><th>Frequency</th><th>Next Action</th><th>Actions</th>
+          </tr>
+        </thead>
+        <tbody id="recurringTableBody"></tbody>
+      </table>
+      <div class="empty-state hidden" id="recurringEmptyState">No recurring hirers yet.</div>
+    </div>
+  </div>
+
+  <!-- ============ ANALYTICS ============ -->
+  <div id="analyticsView" class="hidden">
+    <div class="toolbar">
+      <select id="fyFilter"></select>
+      <select id="analyticsRoomFilter"><option value="">All Rooms</option></select>
+      <select id="analyticsHirerFilter"><option value="">All Hirers</option></select>
+      <div class="spacer"></div>
+      <button class="btn btn-outline" id="toggleTableViewBtn">View as Table</button>
+    </div>
+
+    <div class="stats-row" id="analyticsStats"></div>
+
+    <div class="viz-card">
+      <div class="viz-card-head">
+        <h3>Invoiced vs Paid — <span id="fyLabel"></span></h3>
+        <div class="viz-legend" id="lineLegend">
+          <span class="key"><span class="swatch" style="background:var(--viz-blue)"></span>Invoiced</span>
+          <span class="key"><span class="swatch" style="background:var(--viz-orange)"></span>Paid</span>
+        </div>
+      </div>
+      <div class="viz-chart-wrap">
+        <svg id="lineChartSvg" viewBox="0 0 860 320" preserveAspectRatio="xMidYMid meet"></svg>
+      </div>
+      <div class="viz-table hidden" id="lineTableView"></div>
+    </div>
+
+    <div class="viz-grid">
+      <div class="viz-card">
+        <div class="viz-card-head"><h3>Revenue by Room (Paid)</h3></div>
+        <div id="roomBarChart" class="bar-chart"></div>
+      </div>
+      <div class="viz-card">
+        <div class="viz-card-head"><h3>Top Hirers (Paid)</h3></div>
+        <div id="hirerBarChart" class="bar-chart"></div>
+      </div>
+    </div>
+
+    <div class="viz-tooltip hidden" id="vizTooltip"></div>
+  </div>
+
   </main>
 </div>
 
-<!-- ================= MODAL ================= -->
+<!-- ================= HIRE MODAL ================= -->
 <div id="modalOverlay" class="hidden">
   <div id="hireModal">
+    <button class="modal-close-x" id="modalCloseX" aria-label="Close">&times;</button>
     <h2 id="modalTitle">New Hire</h2>
     <div class="modal-sub" id="modalSub"></div>
 
@@ -296,26 +457,41 @@
         <div class="field"><label>Email</label><input type="email" id="f_email" /></div>
         <div class="field"><label>Phone Number</label><input type="text" id="f_phone" /></div>
         <div class="field"><label>Booking Time</label><input type="text" id="f_time" placeholder="e.g. 8:30am – 4:30pm" /></div>
-        <div class="field"><label>Required Equipment</label><input type="text" id="f_equipment" /></div>
-        <div class="field full"><label>Additional Notes</label><textarea id="f_notes"></textarea></div>
+        <div class="field"><label>Enquiry Reference</label><input type="text" id="f_enquiryRef" placeholder="NL-YYMMDD-NN" /></div>
+        <div class="field full"><label>Notes for Finance</label><textarea id="f_notes"></textarea></div>
         <div class="field"><label>Total Hire Fee (ex GST)</label><input type="number" step="0.01" id="f_total" /></div>
         <div class="field"><label>Deposit Amount (ex GST)</label><input type="number" step="0.01" id="f_deposit" /></div>
         <div class="field"><label>Balance Amount (ex GST)</label><input type="number" step="0.01" id="f_balance" /></div>
-        <div class="field">
-          <label>Venue Hire Agreement</label>
-          <input type="file" id="f_agreementFile" accept=".pdf,.doc,.docx,.jpg,.png" />
-          <div class="current-file" id="currentFileLink"></div>
+        <div class="field"><label>Status</label>
+          <select id="f_status">
+            <option value="active">Active</option>
+            <option value="cancelled">Cancelled</option>
+          </select>
         </div>
       </div>
-      <div class="checkline" style="margin-top:12px;">
-        <input type="checkbox" id="f_cancelled" />
-        <label for="f_cancelled">Mark this hire as Cancelled</label>
+
+      <div id="cancelFields" class="hidden" style="margin-top:14px;padding-top:14px;border-top:1px dashed var(--border);">
+        <div class="form-grid">
+          <div class="field"><label>Outcome</label>
+            <select id="f_cancelOutcome">
+              <option value="noCharge">No charge</option>
+              <option value="depositForfeited">Deposit forfeited</option>
+              <option value="adminFeeOnly">Admin fee only ($50)</option>
+              <option value="depositForfeitedPlusAdmin">Deposit forfeited + admin fee</option>
+              <option value="fullFee">Full fee payable</option>
+            </select>
+          </div>
+          <div class="field"><label>Amount Now Payable (ex GST)</label><input type="number" step="0.01" id="f_cancelAmountPayable" /></div>
+          <div class="field"><label>Date Cancelled</label><input type="date" id="f_cancelDate" /></div>
+        </div>
       </div>
     </fieldset>
 
     <fieldset id="invoicingFieldset">
       <legend>Invoicing (Finance)</legend>
       <div class="form-grid">
+        <div class="field"><label>Deposit Invoice Due</label><input type="date" id="f_depositDueDate" /></div>
+        <div class="field"><label>Balance Invoice Due</label><input type="date" id="f_balanceDueDate" /></div>
         <div class="field"><label>Deposit Invoice #</label><input type="text" id="f_depositInvNum" /></div>
         <div class="field"><label>Balance Invoice #</label><input type="text" id="f_balanceInvNum" /></div>
       </div>
@@ -323,18 +499,114 @@
       <div class="checkline"><input type="checkbox" id="f_depositPaid" /><label for="f_depositPaid">Deposit Paid</label></div>
       <div class="checkline"><input type="checkbox" id="f_balanceInvoiceSent" /><label for="f_balanceInvoiceSent">Balance Invoice Sent</label></div>
       <div class="checkline"><input type="checkbox" id="f_balancePaid" /><label for="f_balancePaid">Balance Paid</label></div>
-      <div class="field full"><label>Invoicing Notes</label><textarea id="f_invNotes"></textarea></div>
+
+      <div id="cancelInvoiceFields" class="hidden">
+        <div class="form-grid" style="margin-top:8px;">
+          <div class="field"><label>Cancellation Invoice #</label><input type="text" id="f_cancelInvNum" /></div>
+        </div>
+        <div class="checkline"><input type="checkbox" id="f_cancelInvoiceSent" /><label for="f_cancelInvoiceSent">Cancellation Invoice Sent</label></div>
+        <div class="checkline"><input type="checkbox" id="f_cancelPaid" /><label for="f_cancelPaid">Cancellation Paid</label></div>
+      </div>
+
+      <div class="field full" style="margin-top:8px;"><label>Invoicing Notes</label><textarea id="f_invNotes"></textarea></div>
     </fieldset>
 
     <div class="modal-footer">
       <div class="left">
         <button class="btn btn-danger hidden" id="deleteHireBtn">Delete</button>
+        <button class="btn btn-outline hidden" id="restoreHireBtn">Restore from Archive</button>
+        <div class="delete-popover hidden" id="deleteChoicePopover">
+          <button class="btn btn-outline" id="archiveHireBtn">Archive</button>
+          <button class="btn btn-danger" id="hardDeleteHireBtn">Delete Permanently</button>
+        </div>
       </div>
       <div class="right">
-        <button class="btn btn-outline" id="cancelModalBtn">Cancel</button>
         <button class="btn btn-primary" id="saveHireBtn">Save</button>
       </div>
     </div>
+  </div>
+</div>
+
+<!-- ================= RECURRING HIRER MODAL ================= -->
+<div id="hirerModalOverlay" class="hidden">
+  <div id="hirerModal">
+    <button class="modal-close-x" id="hirerModalCloseX" aria-label="Close">&times;</button>
+    <h2 id="hirerModalTitle">New Recurring Hirer</h2>
+    <div class="modal-sub">Hirer-level details. Billing happens per period — see "Periods" on the table row.</div>
+    <div class="form-grid">
+      <div class="field"><label>Hirer</label><input type="text" id="rh_hirer" /></div>
+      <div class="field"><label>Contact Name</label><input type="text" id="rh_contact" /></div>
+      <div class="field"><label>Email</label><input type="email" id="rh_email" /></div>
+      <div class="field"><label>Phone Number</label><input type="text" id="rh_phone" /></div>
+      <div class="field"><label>Room/s</label><input type="text" id="rh_rooms" list="roomOptions" /></div>
+      <div class="field"><label>Day &amp; Time</label><input type="text" id="rh_dayTime" placeholder="e.g. Wednesdays 4–5pm" /></div>
+      <div class="field"><label>Rate per Session (ex GST)</label><input type="number" step="0.01" id="rh_rate" /></div>
+      <div class="field"><label>Billing Frequency</label>
+        <select id="rh_frequency">
+          <option value="weekly">Weekly</option>
+          <option value="fortnightly">Fortnightly</option>
+          <option value="monthly">Monthly</option>
+          <option value="term">Term</option>
+        </select>
+      </div>
+      <div class="field full"><label>Notes</label><textarea id="rh_notes"></textarea></div>
+    </div>
+    <div class="modal-footer">
+      <div class="left">
+        <button class="btn btn-danger hidden" id="deleteHirerBtn">Delete</button>
+      </div>
+      <div class="right">
+        <button class="btn btn-primary" id="saveHirerBtn">Save</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ================= PERIODS MODAL ================= -->
+<div id="periodsModalOverlay" class="hidden">
+  <div id="periodsModal" style="width:760px;">
+    <button class="modal-close-x" id="periodsModalCloseX" aria-label="Close">&times;</button>
+    <h2 id="periodsModalTitle">Billing Periods</h2>
+    <div class="modal-sub" id="periodsModalSub"></div>
+
+    <div style="overflow-x:auto;">
+      <table>
+        <thead><tr><th>Period</th><th>Sessions</th><th>Amount</th><th>Invoice #</th><th>Next Action</th><th>Actions</th></tr></thead>
+        <tbody id="periodsTableBody"></tbody>
+      </table>
+      <div class="empty-state hidden" id="periodsEmptyState">No billing periods yet.</div>
+    </div>
+
+    <button class="btn btn-outline" id="newPeriodBtn" style="margin-top:14px;">+ New Period</button>
+
+    <fieldset id="periodFormFieldset" class="hidden" style="margin-top:14px;">
+      <legend id="periodFormLegend">New Period</legend>
+      <div class="form-grid">
+        <div class="field"><label>Period Start</label><input type="date" id="p_start" /></div>
+        <div class="field"><label>Period End</label><input type="date" id="p_end" /></div>
+        <div class="field"><label>Number of Sessions</label><input type="number" step="1" min="0" id="p_sessions" /></div>
+        <div class="field"><label>Amount (ex GST)</label><input type="number" step="0.01" id="p_amount" /></div>
+        <div class="field"><label>Invoice #</label><input type="text" id="p_invoiceNumber" /></div>
+        <div class="field"><label>Due Date</label><input type="date" id="p_dueDate" /></div>
+      </div>
+      <div class="adjustments-list" id="p_adjustmentsList"></div>
+      <div class="adjustment-add-row">
+        <input type="text" id="p_adjLabel" placeholder="Adjustment label, e.g. Session cancelled or Admin fee" />
+        <input type="number" step="0.01" id="p_adjAmount" placeholder="Amount (+/-)" style="width:140px;" />
+        <button class="btn btn-outline" id="p_addAdjustment" type="button">Add</button>
+      </div>
+      <div class="checkline" style="margin-top:10px;"><input type="checkbox" id="p_sent" /><label for="p_sent">Invoice Sent</label></div>
+      <div class="checkline"><input type="checkbox" id="p_paid" /><label for="p_paid">Paid</label></div>
+      <div class="modal-footer">
+        <div class="left">
+          <button class="btn btn-danger hidden" id="deletePeriodBtn">Delete Period</button>
+        </div>
+        <div class="right">
+          <button class="btn btn-outline" id="cancelPeriodFormBtn" type="button">Close Form</button>
+          <button class="btn btn-primary" id="savePeriodBtn" type="button">Save Period</button>
+        </div>
+      </div>
+    </fieldset>
   </div>
 </div>
 
@@ -373,18 +645,14 @@ import {
   getFirestore, collection, addDoc, updateDoc, deleteDoc, doc,
   onSnapshot, query, orderBy, serverTimestamp, writeBatch
 } from "https://www.gstatic.com/firebasejs/12.17.1/firebase-firestore.js";
-import {
-  getStorage, ref, uploadBytes, getDownloadURL, deleteObject
-} from "https://www.gstatic.com/firebasejs/12.17.1/firebase-storage.js";
 
-let app, auth, db, storage;
+let app, auth, db;
 let firebaseReady = false;
 try {
   if (firebaseConfig.apiKey !== "REPLACE_ME") {
     app = initializeApp(firebaseConfig);
     auth = getAuth(app);
     db = getFirestore(app);
-    storage = getStorage(app);
     firebaseReady = true;
   }
 } catch (e) {
@@ -396,11 +664,120 @@ if (!firebaseReady) {
 }
 
 /* ---------------- State ---------------- */
-let currentRole = null;       // 'simon' | 'finance'
-let selectedLoginRole = null; // role chosen on the login screen before password entry
-let allHires = [];            // live cache of all hire docs from Firestore
-let editingId = null;         // id of hire currently open in modal, or null for "new"
+let currentRole = null;
+let selectedLoginRole = null;
+let allHires = [];
+let editingId = null;
 let activeChip = "all";
+let nextActionSortDir = "asc";
+let allRecurringHirers = [];
+let allPeriods = [];
+let periodListeners = {};
+let editingHirerId = null;
+let currentPeriodsHirerId = null;
+let editingPeriodId = null;
+let currentAdjustments = [];
+
+const CANCEL_OUTCOMES = {
+  noCharge: { label: "No charge", amount: () => 0 },
+  depositForfeited: { label: "Deposit forfeited", amount: (dep) => dep },
+  adminFeeOnly: { label: "Admin fee only ($50)", amount: () => 50 },
+  depositForfeitedPlusAdmin: { label: "Deposit forfeited + admin fee", amount: (dep) => dep + 50 },
+  fullFee: { label: "Full fee payable", amount: (dep, total) => total }
+};
+
+/* ---------------- Date helpers ---------------- */
+function todayISO() {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
+function addDaysISO(iso, days) {
+  if (!iso) return "";
+  const [y, m, d] = iso.split("-").map(Number);
+  const dt = new Date(y, m - 1, d);
+  dt.setDate(dt.getDate() + days);
+  return `${dt.getFullYear()}-${String(dt.getMonth() + 1).padStart(2, "0")}-${String(dt.getDate()).padStart(2, "0")}`;
+}
+function daysUntilDate(iso) {
+  if (!iso) return null;
+  const today = new Date(); today.setHours(0, 0, 0, 0);
+  const [y, m, d] = iso.split("-").map(Number);
+  const dt = new Date(y, m - 1, d);
+  return Math.round((dt - today) / 86400000);
+}
+function pillClassForDays(days) {
+  if (days === null) return "neutral";
+  if (days < 0) return "overdue";
+  if (days <= 7) return "amber";
+  return "neutral";
+}
+function formatDate(iso) {
+  if (!iso) return "";
+  const [y, m, d] = iso.split("-");
+  return `${d}/${m}/${y}`;
+}
+function formatShortDate(iso) {
+  if (!iso) return "";
+  const [y, m, d] = iso.split("-").map(Number);
+  const dt = new Date(y, m - 1, d);
+  return dt.toLocaleDateString(undefined, { day: "numeric", month: "short" });
+}
+function buildNextAction(key, text, dueDateStr) {
+  const days = daysUntilDate(dueDateStr);
+  const cls = pillClassForDays(days);
+  let daysText;
+  if (days === null) daysText = "";
+  else if (days < 0) daysText = `overdue by ${Math.abs(days)} day${Math.abs(days) === 1 ? "" : "s"}`;
+  else if (days === 0) daysText = "due today";
+  else daysText = `due ${formatShortDate(dueDateStr)} (${days} day${days === 1 ? "" : "s"})`;
+  return { key, text: daysText ? `${text} — ${daysText}` : text, cls, dueDateStr: dueDateStr || null, days };
+}
+const NOTHING_OUTSTANDING = { key: "done", text: "Nothing outstanding", cls: "green", dueDateStr: null, days: null };
+
+function computeNextAction(h) {
+  if (h.status === "cancelled") {
+    const payable = Number(h.cancelAmountPayable || 0);
+    if (payable <= 0) return NOTHING_OUTSTANDING;
+    if (!h.cancelInvoiceSent) return buildNextAction("sendCancel", "Send cancellation invoice", h.cancelDate);
+    if (!h.cancelPaid) return buildNextAction("chaseCancel", "Chase cancellation payment", h.cancelDate);
+    return NOTHING_OUTSTANDING;
+  }
+  if (Number(h.depositAmount || 0) > 0) {
+    if (!h.depositInvoiceSent) return buildNextAction("sendDeposit", "Send deposit invoice", h.depositDueDate);
+    if (!h.depositPaid) return buildNextAction("chaseDeposit", "Chase deposit payment", h.depositDueDate);
+  }
+  if (Number(h.balanceAmount || 0) > 0) {
+    if (!h.balanceInvoiceSent) return buildNextAction("sendBalance", "Send balance invoice", h.balanceDueDate);
+    if (!h.balancePaid) return buildNextAction("chaseBalance", "Chase balance payment", h.balanceDueDate);
+  }
+  return NOTHING_OUTSTANDING;
+}
+function computePeriodNextAction(p) {
+  if (!p.sent) return buildNextAction("send", "Send period invoice", p.dueDate);
+  if (!p.paid) return buildNextAction("chase", "Chase period payment", p.dueDate);
+  return NOTHING_OUTSTANDING;
+}
+function nextActionPillHtml(na) {
+  return `<span class="pill ${na.cls}">${escapeHtml(na.text)}</span>`;
+}
+
+function fmtMoney(v) { return "$" + Math.round(Number(v) || 0).toLocaleString(); }
+function formatCompact(v) {
+  const n = Number(v) || 0;
+  if (Math.abs(n) >= 1000000) return (n / 1000000).toFixed(1).replace(/\.0$/, "") + "M";
+  if (Math.abs(n) >= 1000) return (n / 1000).toFixed(1).replace(/\.0$/, "") + "K";
+  return String(Math.round(n));
+}
+function escapeHtml(str) {
+  return String(str).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+}
+function generateEnquiryRef() {
+  const now = new Date();
+  const datePart = `${String(now.getFullYear()).slice(2)}${String(now.getMonth() + 1).padStart(2, "0")}${String(now.getDate()).padStart(2, "0")}`;
+  const prefix = `NL-${datePart}-`;
+  const todayCount = allHires.filter(h => (h.enquiryRef || "").startsWith(prefix)).length;
+  return `${prefix}${String(todayCount + 1).padStart(2, "0")}`;
+}
 
 /* ---------------- Login screen ---------------- */
 document.querySelectorAll(".role-btn").forEach(btn => {
@@ -413,54 +790,33 @@ document.querySelectorAll(".role-btn").forEach(btn => {
     document.getElementById("loginError").textContent = "";
   });
 });
-
-document.getElementById("passwordInput").addEventListener("keydown", (e) => {
-  if (e.key === "Enter") doLogin();
-});
+document.getElementById("passwordInput").addEventListener("keydown", (e) => { if (e.key === "Enter") doLogin(); });
 document.getElementById("loginBtn").addEventListener("click", doLogin);
 
 async function doLogin() {
   const errEl = document.getElementById("loginError");
   errEl.textContent = "";
-  if (!firebaseReady) {
-    errEl.textContent = "Firebase isn't configured yet — see the warning above.";
-    return;
-  }
-  if (!selectedLoginRole) {
-    errEl.textContent = "Choose Simon or Finance first.";
-    return;
-  }
+  if (!firebaseReady) { errEl.textContent = "Firebase isn't configured yet — see the warning above."; return; }
+  if (!selectedLoginRole) { errEl.textContent = "Choose Simon or Finance first."; return; }
   const password = document.getElementById("passwordInput").value;
-  if (!password) {
-    errEl.textContent = "Enter the password.";
-    return;
-  }
+  if (!password) { errEl.textContent = "Enter the password."; return; }
   const email = ROLE_EMAILS[selectedLoginRole];
   try {
     await setPersistence(auth, browserLocalPersistence);
     await signInWithEmailAndPassword(auth, email, password);
-    // onAuthStateChanged will take it from here
   } catch (e) {
     console.error(e);
     errEl.textContent = "Incorrect password, or that account doesn't exist yet.";
   }
 }
+document.getElementById("logoutBtn").addEventListener("click", () => signOut(auth));
 
-document.getElementById("logoutBtn").addEventListener("click", () => {
-  signOut(auth);
-});
-
-/* ---------------- Auth state routing ---------------- */
 if (firebaseReady) {
   onAuthStateChanged(auth, (user) => {
     if (user) {
       const email = (user.email || "").toLowerCase();
       currentRole = Object.keys(ROLE_EMAILS).find(r => ROLE_EMAILS[r].toLowerCase() === email) || null;
-      if (!currentRole) {
-        // Unknown account signed in somehow — sign them back out.
-        signOut(auth);
-        return;
-      }
+      if (!currentRole) { signOut(auth); return; }
       showApp();
     } else {
       currentRole = null;
@@ -483,7 +839,10 @@ function showApp() {
   document.getElementById("addHireBtn").classList.toggle("hidden", currentRole !== "simon");
   document.getElementById("importCsvBtn").classList.toggle("hidden", currentRole !== "simon");
   document.getElementById("downloadTemplateBtn").classList.toggle("hidden", currentRole !== "simon");
+  document.getElementById("addRecurringHirerBtn").classList.toggle("hidden", currentRole !== "simon");
+  switchTab("duenow");
   subscribeHires();
+  subscribeRecurringHirers();
 }
 
 /* ---------------- Dark mode ---------------- */
@@ -502,21 +861,110 @@ darkToggleBtns.forEach(btn => {
   });
 });
 
-/* ---------------- Firestore live data ---------------- */
+/* ---------------- Tabs ---------------- */
+document.querySelectorAll(".tab-btn").forEach(btn => {
+  btn.addEventListener("click", () => switchTab(btn.dataset.tab));
+});
+function switchTab(tab) {
+  document.querySelectorAll(".tab-btn").forEach(b => b.classList.toggle("active", b.dataset.tab === tab));
+  ["duenow", "bookings", "recurring", "analytics"].forEach(t => {
+    document.getElementById(t + "View").classList.toggle("hidden", t !== tab);
+  });
+  if (tab === "duenow") renderDueNow();
+  if (tab === "bookings") renderTable();
+  if (tab === "recurring") renderRecurringTable();
+  if (tab === "analytics") renderAnalytics();
+}
+function isTabVisible(tab) { return !document.getElementById(tab + "View").classList.contains("hidden"); }
+
+/* ---------------- Firestore live data: one-off hires ---------------- */
 function subscribeHires() {
   const q = query(collection(db, "hires"), orderBy("dateOfHire", "asc"));
   onSnapshot(q, (snap) => {
     allHires = snap.docs.map(d => ({ id: d.id, ...d.data() }));
     populateFilterOptions();
     renderStats();
-    renderTable();
+    if (isTabVisible("bookings")) renderTable();
+    if (isTabVisible("duenow")) renderDueNow();
+    if (isTabVisible("analytics")) renderAnalytics();
   }, (err) => {
     console.error(err);
     toast("Couldn't load hires — check Firestore rules / connection.");
   });
 }
 
-/* ---------------- Filters ---------------- */
+/* ---------------- Firestore live data: recurring hirers + periods ---------------- */
+function subscribeRecurringHirers() {
+  const q = query(collection(db, "recurringHirers"), orderBy("hirer", "asc"));
+  onSnapshot(q, (snap) => {
+    allRecurringHirers = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    syncPeriodListeners();
+    if (isTabVisible("recurring")) renderRecurringTable();
+    if (isTabVisible("duenow")) renderDueNow();
+  }, (err) => {
+    console.error(err);
+    toast("Couldn't load recurring hirers — check Firestore rules / connection.");
+  });
+}
+function syncPeriodListeners() {
+  const currentIds = new Set(allRecurringHirers.map(h => h.id));
+  Object.keys(periodListeners).forEach(id => {
+    if (!currentIds.has(id)) {
+      periodListeners[id]();
+      delete periodListeners[id];
+      allPeriods = allPeriods.filter(p => p.hirerId !== id);
+    }
+  });
+  allRecurringHirers.forEach(h => {
+    if (periodListeners[h.id]) return;
+    const q = query(collection(db, "recurringHirers", h.id, "periods"), orderBy("periodStart", "asc"));
+    periodListeners[h.id] = onSnapshot(q, (snap) => {
+      allPeriods = allPeriods.filter(p => p.hirerId !== h.id).concat(snap.docs.map(d => ({ id: d.id, hirerId: h.id, ...d.data() })));
+      if (isTabVisible("recurring")) renderRecurringTable();
+      if (isTabVisible("duenow")) renderDueNow();
+      if (currentPeriodsHirerId === h.id && !document.getElementById("periodsModalOverlay").classList.contains("hidden")) {
+        renderPeriodsTable();
+      }
+    }, (err) => console.error(err));
+  });
+}
+
+/* ---------------- Due Now ---------------- */
+function renderDueNow() {
+  const rows = [];
+  allHires.filter(h => !h.archived).forEach(h => {
+    const na = computeNextAction(h);
+    if (na.key === "done") return;
+    rows.push({ type: "One-off", hirer: h.hirer || "—", detail: `${formatDate(h.dateOfHire)} · ${h.rooms || ""}`, na, goto: () => { switchTab("bookings"); openModal(h.id); } });
+  });
+  allPeriods.forEach(p => {
+    const na = computePeriodNextAction(p);
+    if (na.key === "done") return;
+    const hirerRec = allRecurringHirers.find(h => h.id === p.hirerId);
+    rows.push({ type: "Recurring", hirer: hirerRec ? hirerRec.hirer : "—", detail: `${formatDate(p.periodStart)} – ${formatDate(p.periodEnd)}`, na, goto: () => { switchTab("recurring"); openPeriodsModal(p.hirerId); } });
+  });
+  rows.sort((a, b) => (a.na.days === null ? Infinity : a.na.days) - (b.na.days === null ? Infinity : b.na.days));
+
+  const tbody = document.getElementById("dueNowTableBody");
+  document.getElementById("dueNowEmptyState").classList.toggle("hidden", rows.length !== 0);
+  tbody.innerHTML = "";
+  rows.forEach((r, i) => {
+    const tr = document.createElement("tr");
+    const tdType = document.createElement("td"); tdType.textContent = r.type;
+    const tdHirer = document.createElement("td"); tdHirer.textContent = r.hirer;
+    const tdDetail = document.createElement("td"); tdDetail.textContent = r.detail;
+    const tdNa = document.createElement("td"); tdNa.innerHTML = nextActionPillHtml(r.na);
+    const tdActions = document.createElement("td");
+    const btn = document.createElement("button");
+    btn.textContent = "Open"; btn.style.cssText = "background:var(--card);border:1px solid var(--border);border-radius:5px;padding:4px 9px;font-size:12px;color:var(--text);";
+    btn.addEventListener("click", r.goto);
+    tdActions.appendChild(btn);
+    tr.appendChild(tdType); tr.appendChild(tdHirer); tr.appendChild(tdDetail); tr.appendChild(tdNa); tr.appendChild(tdActions);
+    tbody.appendChild(tr);
+  });
+}
+
+/* ---------------- Filters (Bookings) ---------------- */
 document.getElementById("searchInput").addEventListener("input", renderTable);
 document.getElementById("roomFilter").addEventListener("change", renderTable);
 document.getElementById("monthFilter").addEventListener("change", renderTable);
@@ -528,68 +976,56 @@ document.querySelectorAll(".chip").forEach(chip => {
     renderTable();
   });
 });
-document.querySelector('.chip[data-filter="all"]').classList.add("active");
+document.getElementById("thNextAction").addEventListener("click", () => {
+  nextActionSortDir = nextActionSortDir === "asc" ? "desc" : "asc";
+  renderTable();
+});
 
 function populateFilterOptions() {
   const roomSel = document.getElementById("roomFilter");
   const existing = new Set(Array.from(roomSel.options).map(o => o.value));
-  const rooms = [...new Set(allHires.map(h => h.rooms).filter(Boolean))].sort();
-  rooms.forEach(r => {
-    if (!existing.has(r)) {
-      const opt = document.createElement("option");
-      opt.value = r; opt.textContent = r;
-      roomSel.appendChild(opt);
-    }
+  [...new Set(allHires.map(h => h.rooms).filter(Boolean))].sort().forEach(r => {
+    if (!existing.has(r)) { const opt = document.createElement("option"); opt.value = r; opt.textContent = r; roomSel.appendChild(opt); }
   });
-
   const monthSel = document.getElementById("monthFilter");
   if (monthSel.options.length <= 1) {
-    const months = [...new Set(allHires.map(h => (h.dateOfHire || "").slice(0,7)).filter(Boolean))].sort();
-    months.forEach(m => {
-      const opt = document.createElement("option");
-      opt.value = m; opt.textContent = formatMonthYear(m);
-      monthSel.appendChild(opt);
+    [...new Set(allHires.map(h => (h.dateOfHire || "").slice(0, 7)).filter(Boolean))].sort().forEach(m => {
+      const opt = document.createElement("option"); opt.value = m; opt.textContent = formatMonthYear(m); monthSel.appendChild(opt);
     });
   }
 }
-
 function formatMonthYear(ym) {
   if (!ym) return "";
   const [y, m] = ym.split("-");
-  const d = new Date(Number(y), Number(m) - 1, 1);
-  return d.toLocaleDateString(undefined, { month: "long", year: "numeric" });
+  return new Date(Number(y), Number(m) - 1, 1).toLocaleDateString(undefined, { month: "long", year: "numeric" });
 }
 
 function getFilteredHires() {
   const search = document.getElementById("searchInput").value.trim().toLowerCase();
   const room = document.getElementById("roomFilter").value;
   const month = document.getElementById("monthFilter").value;
-  const today = new Date().toISOString().slice(0, 10);
+  const today = todayISO();
 
   return allHires.filter(h => {
+    if (activeChip === "archived") { if (!h.archived) return false; }
+    else if (h.archived) return false;
+
     if (search) {
-      const hay = [h.hirer, h.contactName, h.email, h.phone].join(" ").toLowerCase();
+      const hay = [h.hirer, h.contactName, h.email, h.phone, h.enquiryRef].join(" ").toLowerCase();
       if (!hay.includes(search)) return false;
     }
     if (room && h.rooms !== room) return false;
-    if (month && (h.dateOfHire || "").slice(0,7) !== month) return false;
+    if (month && (h.dateOfHire || "").slice(0, 7) !== month) return false;
 
+    const na = computeNextAction(h);
     switch (activeChip) {
-      case "needsDeposit":
-        if (h.cancelled || h.depositInvoiceSent) return false;
-        break;
-      case "needsBalance":
-        if (h.cancelled || h.balanceInvoiceSent) return false;
-        break;
-      case "fullyPaid":
-        if (!(h.depositPaid && h.balancePaid)) return false;
-        break;
-      case "upcoming":
-        if (h.cancelled || (h.dateOfHire || "") < today) return false;
-        break;
-      case "cancelled":
-        if (!h.cancelled) return false;
-        break;
+      case "overdue": if (na.cls !== "overdue") return false; break;
+      case "dueSoon": if (na.cls !== "amber") return false; break;
+      case "needsDeposit": if (na.key !== "sendDeposit") return false; break;
+      case "needsBalance": if (na.key !== "sendBalance") return false; break;
+      case "done": if (na.key !== "done") return false; break;
+      case "upcoming": if (h.status === "cancelled" || (h.dateOfHire || "") < today) return false; break;
+      case "cancelled": if (h.status !== "cancelled") return false; break;
       default: break;
     }
     return true;
@@ -598,54 +1034,68 @@ function getFilteredHires() {
 
 /* ---------------- Stats ---------------- */
 function renderStats() {
-  const active = allHires.filter(h => !h.cancelled);
-  const needsDeposit = active.filter(h => !h.depositInvoiceSent).length;
-  const needsBalance = active.filter(h => !h.balanceInvoiceSent).length;
-  const outstanding = active.filter(h => (h.depositInvoiceSent && !h.depositPaid) || (h.balanceInvoiceSent && !h.balancePaid)).length;
-  const today = new Date().toISOString().slice(0,10);
-  const upcoming = active.filter(h => (h.dateOfHire || "") >= today).length;
-
+  const active = allHires.filter(h => !h.archived);
+  let overdue = 0, dueSoon = 0, outstanding = 0, upcoming = 0;
+  const today = todayISO();
+  active.forEach(h => {
+    const na = computeNextAction(h);
+    if (na.cls === "overdue") overdue++;
+    if (na.cls === "amber") dueSoon++;
+    if (na.key !== "done") {
+      if (h.status === "cancelled") outstanding += Number(h.cancelAmountPayable || 0);
+      else {
+        if (na.key === "sendDeposit" || na.key === "chaseDeposit") outstanding += Number(h.depositAmount || 0);
+        if (na.key === "sendBalance" || na.key === "chaseBalance") outstanding += Number(h.balanceAmount || 0);
+      }
+    }
+    if (h.status !== "cancelled" && (h.dateOfHire || "") >= today) upcoming++;
+  });
   const cards = [
-    { num: active.length, lbl: "Active Hires" },
-    { num: needsDeposit, lbl: "Need Deposit Invoice" },
-    { num: needsBalance, lbl: "Need Balance Invoice" },
-    { num: outstanding, lbl: "Awaiting Payment" },
-    { num: upcoming, lbl: "Upcoming" },
+    { num: String(overdue), lbl: "Overdue" },
+    { num: String(dueSoon), lbl: "Due Within 7 Days" },
+    { num: fmtMoney(outstanding), lbl: "Outstanding" },
+    { num: String(upcoming), lbl: "Upcoming Hires" }
   ];
   document.getElementById("statsRow").innerHTML = cards.map(c =>
     `<div class="stat-card"><div class="num">${c.num}</div><div class="lbl">${c.lbl}</div></div>`
   ).join("");
 }
 
-/* ---------------- Table ---------------- */
+/* ---------------- Bookings table ---------------- */
 function renderTable() {
-  const rows = getFilteredHires();
+  let rows = getFilteredHires();
+  if (nextActionSortDir) {
+    rows = rows.map(h => ({ h, na: computeNextAction(h) }))
+      .sort((a, b) => {
+        const da = a.na.days === null ? Infinity : a.na.days;
+        const db_ = b.na.days === null ? Infinity : b.na.days;
+        return nextActionSortDir === "asc" ? da - db_ : db_ - da;
+      })
+      .map(x => x.h);
+  }
   const tbody = document.getElementById("tableBody");
   document.getElementById("emptyState").classList.toggle("hidden", rows.length !== 0);
 
   tbody.innerHTML = rows.map(h => {
-    const depositBadge = h.depositPaid
-      ? `<span class="badge yes">Paid</span>`
-      : h.depositInvoiceSent ? `<span class="badge no">Invoiced</span>` : `<span class="badge no">Pending</span>`;
-    const balanceBadge = h.balancePaid
-      ? `<span class="badge yes">Paid</span>`
-      : h.balanceInvoiceSent ? `<span class="badge no">Invoiced</span>` : `<span class="badge no">Pending</span>`;
-    const agreement = h.agreementFileURL
-      ? `<a class="agreement-link" href="${h.agreementFileURL}" target="_blank" rel="noopener">View</a>`
-      : `<span style="color:var(--muted);font-size:12px;">—</span>`;
-    const cancelledTag = h.cancelled ? ` <span class="badge cancelled">Cancelled</span>` : "";
-
-    return `<tr class="${h.cancelled ? "cancelled" : ""}" data-id="${h.id}">
+    const na = computeNextAction(h);
+    const rowClasses = [h.status === "cancelled" ? "cancelled" : "", h.archived ? "archived-row" : ""].filter(Boolean).join(" ");
+    let feeCell;
+    if (h.status === "cancelled") {
+      const outcomeLabel = (CANCEL_OUTCOMES[h.cancelOutcome] || {}).label || "cancelled";
+      feeCell = `<div class="fee-cancelled"><span class="orig">$${Number(h.totalHireFee || 0).toFixed(0)}</span> → $${Number(h.cancelAmountPayable || 0).toFixed(0)}<span class="outcome">${escapeHtml(outcomeLabel)}</span></div>`;
+    } else {
+      feeCell = `$${Number(h.totalHireFee || 0).toFixed(2)}`;
+    }
+    return `<tr class="${rowClasses}" data-id="${h.id}">
       <td>${formatDate(h.dateOfHire)}</td>
-      <td>${escapeHtml(h.hirer || "")}${cancelledTag}</td>
+      <td>${escapeHtml(h.hirer || "")}</td>
       <td>${escapeHtml(h.contactName || "")}<br><span style="color:var(--muted);font-size:11.5px;">${escapeHtml(h.email || "")}</span></td>
       <td>${escapeHtml(h.rooms || "")}</td>
       <td>${escapeHtml(h.bookingTime || "")}</td>
-      <td>$${Number(h.totalHireFee || 0).toFixed(2)}</td>
-      <td>${depositBadge}</td>
-      <td>${balanceBadge}</td>
-      <td>${agreement}</td>
-      <td class="row-actions"><button data-action="edit" data-id="${h.id}">${currentRole === "simon" ? "Edit" : "Invoicing"}</button></td>
+      <td style="font-size:11px;color:var(--muted);">${escapeHtml(h.enquiryRef || "")}</td>
+      <td>${feeCell}</td>
+      <td>${nextActionPillHtml(na)}</td>
+      <td class="row-actions"><button data-action="edit" data-id="${h.id}">${currentRole === "simon" ? "Edit" : "View"}</button></td>
     </tr>`;
   }).join("");
 
@@ -654,21 +1104,29 @@ function renderTable() {
   });
 }
 
-function formatDate(iso) {
-  if (!iso) return "";
-  const [y,m,d] = iso.split("-");
-  return `${d}/${m}/${y}`;
-}
-function escapeHtml(str) {
-  return String(str).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
-}
-
-/* ---------------- Modal: open / close ---------------- */
+/* ---------------- Hire modal: open / close ---------------- */
 document.getElementById("addHireBtn").addEventListener("click", () => openModal(null));
-document.getElementById("cancelModalBtn").addEventListener("click", closeModal);
-document.getElementById("modalOverlay").addEventListener("click", (e) => {
-  if (e.target.id === "modalOverlay") closeModal();
+document.getElementById("modalCloseX").addEventListener("click", closeModal);
+document.getElementById("modalOverlay").addEventListener("click", (e) => { if (e.target.id === "modalOverlay") closeModal(); });
+document.addEventListener("keydown", (e) => {
+  if (e.key !== "Escape") return;
+  if (!document.getElementById("modalOverlay").classList.contains("hidden")) closeModal();
+  if (!document.getElementById("hirerModalOverlay").classList.contains("hidden")) closeHirerModal();
+  if (!document.getElementById("periodsModalOverlay").classList.contains("hidden")) closePeriodsModal();
 });
+
+document.getElementById("f_status").addEventListener("change", updateCancelFieldsVisibility);
+document.getElementById("f_cancelOutcome").addEventListener("change", () => {
+  const dep = parseFloat(document.getElementById("f_deposit").value) || 0;
+  const total = parseFloat(document.getElementById("f_total").value) || 0;
+  const outcome = CANCEL_OUTCOMES[document.getElementById("f_cancelOutcome").value];
+  if (outcome) document.getElementById("f_cancelAmountPayable").value = outcome.amount(dep, total);
+});
+function updateCancelFieldsVisibility() {
+  const isCancelled = document.getElementById("f_status").value === "cancelled";
+  document.getElementById("cancelFields").classList.toggle("hidden", !isCancelled);
+  document.getElementById("cancelInvoiceFields").classList.toggle("hidden", !isCancelled);
+}
 
 function openModal(id) {
   editingId = id;
@@ -686,55 +1144,59 @@ function openModal(id) {
   document.getElementById("f_email").value = hire?.email || "";
   document.getElementById("f_phone").value = hire?.phone || "";
   document.getElementById("f_time").value = hire?.bookingTime || "";
-  document.getElementById("f_equipment").value = hire?.requiredEquipment || "";
+  document.getElementById("f_enquiryRef").value = hire?.enquiryRef || (id ? "" : generateEnquiryRef());
   document.getElementById("f_notes").value = hire?.additionalNotes || "";
   document.getElementById("f_total").value = hire?.totalHireFee ?? "";
   document.getElementById("f_deposit").value = hire?.depositAmount ?? "";
   document.getElementById("f_balance").value = hire?.balanceAmount ?? "";
-  document.getElementById("f_cancelled").checked = !!hire?.cancelled;
-  document.getElementById("f_agreementFile").value = "";
-  document.getElementById("currentFileLink").innerHTML = hire?.agreementFileURL
-    ? `Current file: <a class="agreement-link" href="${hire.agreementFileURL}" target="_blank" rel="noopener">${escapeHtml(hire.agreementFileName || "view")}</a>`
-    : "No file uploaded yet.";
+  document.getElementById("f_status").value = hire?.status || "active";
+  document.getElementById("f_cancelOutcome").value = hire?.cancelOutcome || "noCharge";
+  document.getElementById("f_cancelAmountPayable").value = hire?.cancelAmountPayable ?? "";
+  document.getElementById("f_cancelDate").value = hire?.cancelDate || (hire?.status === "cancelled" ? todayISO() : "");
+  updateCancelFieldsVisibility();
 
+  document.getElementById("f_depositDueDate").value = hire?.depositDueDate || "";
+  document.getElementById("f_balanceDueDate").value = hire?.balanceDueDate || "";
   document.getElementById("f_depositInvNum").value = hire?.depositInvoiceNumber || "";
   document.getElementById("f_balanceInvNum").value = hire?.balanceInvoiceNumber || "";
   document.getElementById("f_depositInvoiceSent").checked = !!hire?.depositInvoiceSent;
   document.getElementById("f_depositPaid").checked = !!hire?.depositPaid;
   document.getElementById("f_balanceInvoiceSent").checked = !!hire?.balanceInvoiceSent;
   document.getElementById("f_balancePaid").checked = !!hire?.balancePaid;
+  document.getElementById("f_cancelInvNum").value = hire?.cancelInvoiceNumber || "";
+  document.getElementById("f_cancelInvoiceSent").checked = !!hire?.cancelInvoiceSent;
+  document.getElementById("f_cancelPaid").checked = !!hire?.cancelPaid;
   document.getElementById("f_invNotes").value = hire?.invoicingNotes || "";
 
-  // Role-based editability: Simon owns booking details, Finance owns invoicing.
-  const bookingIds = ["f_date","f_rooms","f_hirer","f_contact","f_email","f_phone","f_time","f_equipment","f_notes","f_total","f_deposit","f_balance","f_agreementFile","f_cancelled"];
-  const invoicingIds = ["f_depositInvNum","f_balanceInvNum","f_depositInvoiceSent","f_depositPaid","f_balanceInvoiceSent","f_balancePaid","f_invNotes"];
+  const bookingIds = ["f_date", "f_rooms", "f_hirer", "f_contact", "f_email", "f_phone", "f_time", "f_enquiryRef", "f_notes", "f_total", "f_deposit", "f_balance", "f_status", "f_cancelOutcome", "f_cancelAmountPayable", "f_cancelDate"];
+  const invoicingIds = ["f_depositDueDate", "f_balanceDueDate", "f_depositInvNum", "f_balanceInvNum", "f_depositInvoiceSent", "f_depositPaid", "f_balanceInvoiceSent", "f_balancePaid", "f_cancelInvNum", "f_cancelInvoiceSent", "f_cancelPaid", "f_invNotes"];
   const bookingEditable = currentRole === "simon";
   const invoicingEditable = currentRole === "finance";
   bookingIds.forEach(fid => setFieldEnabled(fid, bookingEditable));
   invoicingIds.forEach(fid => setFieldEnabled(fid, invoicingEditable));
 
-  document.getElementById("deleteHireBtn").classList.toggle("hidden", !(id && currentRole === "simon"));
+  document.getElementById("deleteHireBtn").classList.toggle("hidden", !(id && currentRole === "simon" && !hire?.archived));
+  document.getElementById("restoreHireBtn").classList.toggle("hidden", !(id && currentRole === "simon" && hire?.archived));
+  document.getElementById("deleteChoicePopover").classList.add("hidden");
 
   document.getElementById("modalOverlay").classList.remove("hidden");
 }
-
 function setFieldEnabled(fieldId, enabled) {
   const el = document.getElementById(fieldId);
   el.disabled = !enabled;
   el.closest(".field")?.classList.toggle("disabled", !enabled);
 }
-
 function closeModal() {
   document.getElementById("modalOverlay").classList.add("hidden");
+  document.getElementById("deleteChoicePopover").classList.add("hidden");
   editingId = null;
 }
 
-/* ---------------- Modal: save ---------------- */
+/* ---------------- Hire modal: save ---------------- */
 document.getElementById("saveHireBtn").addEventListener("click", saveHire);
 
 async function saveHire() {
   if (!firebaseReady) { toast("Firebase isn't configured."); return; }
-
   const data = {};
 
   if (currentRole === "simon") {
@@ -745,26 +1207,36 @@ async function saveHire() {
     data.email = document.getElementById("f_email").value.trim();
     data.phone = document.getElementById("f_phone").value.trim();
     data.bookingTime = document.getElementById("f_time").value.trim();
-    data.requiredEquipment = document.getElementById("f_equipment").value.trim();
+    data.enquiryRef = document.getElementById("f_enquiryRef").value.trim();
     data.additionalNotes = document.getElementById("f_notes").value.trim();
     data.totalHireFee = parseFloat(document.getElementById("f_total").value) || 0;
     data.depositAmount = parseFloat(document.getElementById("f_deposit").value) || 0;
     data.balanceAmount = parseFloat(document.getElementById("f_balance").value) || 0;
-    data.cancelled = document.getElementById("f_cancelled").checked;
-
-    if (!data.dateOfHire || !data.hirer) {
-      toast("Date of Hire and Hirer are required.");
-      return;
+    data.status = document.getElementById("f_status").value;
+    if (data.status === "cancelled") {
+      data.cancelOutcome = document.getElementById("f_cancelOutcome").value;
+      data.cancelAmountPayable = parseFloat(document.getElementById("f_cancelAmountPayable").value) || 0;
+      data.cancelDate = document.getElementById("f_cancelDate").value || todayISO();
+    } else {
+      data.cancelOutcome = "";
+      data.cancelAmountPayable = 0;
+      data.cancelDate = "";
     }
+    if (!data.dateOfHire || !data.hirer) { toast("Date of Hire and Hirer are required."); return; }
   }
 
   if (currentRole === "finance") {
+    data.depositDueDate = document.getElementById("f_depositDueDate").value;
+    data.balanceDueDate = document.getElementById("f_balanceDueDate").value;
     data.depositInvoiceNumber = document.getElementById("f_depositInvNum").value.trim();
     data.balanceInvoiceNumber = document.getElementById("f_balanceInvNum").value.trim();
     data.depositInvoiceSent = document.getElementById("f_depositInvoiceSent").checked;
     data.depositPaid = document.getElementById("f_depositPaid").checked;
     data.balanceInvoiceSent = document.getElementById("f_balanceInvoiceSent").checked;
     data.balancePaid = document.getElementById("f_balancePaid").checked;
+    data.cancelInvoiceNumber = document.getElementById("f_cancelInvNum").value.trim();
+    data.cancelInvoiceSent = document.getElementById("f_cancelInvoiceSent").checked;
+    data.cancelPaid = document.getElementById("f_cancelPaid").checked;
     data.invoicingNotes = document.getElementById("f_invNotes").value.trim();
   }
 
@@ -772,75 +1244,75 @@ async function saveHire() {
   data.updatedBy = currentRole;
 
   const saveBtn = document.getElementById("saveHireBtn");
-  saveBtn.disabled = true;
-  saveBtn.textContent = "Saving...";
-
+  saveBtn.disabled = true; saveBtn.textContent = "Saving...";
   try {
-    let hireId = editingId;
-    if (!hireId) {
+    if (!editingId) {
       data.createdAt = serverTimestamp();
       data.createdBy = currentRole;
-      const docRef = await addDoc(collection(db, "hires"), data);
-      hireId = docRef.id;
+      data.archived = false;
+      data.depositDueDate = todayISO();
+      data.balanceDueDate = data.dateOfHire ? addDaysISO(data.dateOfHire, -14) : "";
+      data.depositInvoiceNumber = ""; data.balanceInvoiceNumber = "";
+      data.depositInvoiceSent = false; data.depositPaid = false;
+      data.balanceInvoiceSent = false; data.balancePaid = false;
+      data.cancelInvoiceNumber = ""; data.cancelInvoiceSent = false; data.cancelPaid = false;
+      data.invoicingNotes = "";
+      await addDoc(collection(db, "hires"), data);
     } else {
-      await updateDoc(doc(db, "hires", hireId), data);
+      await updateDoc(doc(db, "hires", editingId), data);
     }
-
-    const fileInput = document.getElementById("f_agreementFile");
-    if (currentRole === "simon" && fileInput.files && fileInput.files[0]) {
-      const file = fileInput.files[0];
-      const fileRef = ref(storage, `agreements/${hireId}/${file.name}`);
-      await uploadBytes(fileRef, file);
-      const url = await getDownloadURL(fileRef);
-      await updateDoc(doc(db, "hires", hireId), {
-        agreementFileURL: url,
-        agreementFileName: file.name
-      });
-    }
-
     toast("Saved.");
     closeModal();
   } catch (e) {
     console.error(e);
-    toast("Save failed — check Firestore/Storage rules & connection.");
+    toast("Save failed — check Firestore rules & connection.");
   } finally {
-    saveBtn.disabled = false;
-    saveBtn.textContent = "Save";
+    saveBtn.disabled = false; saveBtn.textContent = "Save";
   }
 }
 
-/* ---------------- Modal: delete ---------------- */
-document.getElementById("deleteHireBtn").addEventListener("click", async () => {
+/* ---------------- Hire modal: archive / delete ---------------- */
+document.getElementById("deleteHireBtn").addEventListener("click", () => {
+  document.getElementById("deleteChoicePopover").classList.toggle("hidden");
+});
+document.getElementById("archiveHireBtn").addEventListener("click", async () => {
   if (!editingId) return;
-  if (!confirm("Delete this hire permanently? This cannot be undone. (Consider using 'Cancelled' instead if you want to keep a record.)")) return;
+  try {
+    await updateDoc(doc(db, "hires", editingId), { archived: true, updatedAt: serverTimestamp(), updatedBy: currentRole });
+    toast("Hire archived.");
+    closeModal();
+  } catch (e) { console.error(e); toast("Archive failed."); }
+});
+document.getElementById("hardDeleteHireBtn").addEventListener("click", async () => {
+  if (!editingId) return;
+  if (!confirm("Permanently delete this hire? This cannot be undone — consider Archive instead.")) return;
   try {
     await deleteDoc(doc(db, "hires", editingId));
     toast("Hire deleted.");
     closeModal();
-  } catch (e) {
-    console.error(e);
-    toast("Delete failed.");
-  }
+  } catch (e) { console.error(e); toast("Delete failed."); }
+});
+document.getElementById("restoreHireBtn").addEventListener("click", async () => {
+  if (!editingId) return;
+  try {
+    await updateDoc(doc(db, "hires", editingId), { archived: false, updatedAt: serverTimestamp(), updatedBy: currentRole });
+    toast("Hire restored.");
+    closeModal();
+  } catch (e) { console.error(e); toast("Restore failed."); }
 });
 
 /* ---------------- Export to Excel ---------------- */
-const monthNames = ["January","February","March","April","May","June","July","August","September","October","November","December"];
+const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
 function initExportSelectors() {
   const monthSel = document.getElementById("exportMonth");
   monthNames.forEach((m, i) => {
-    const opt = document.createElement("option");
-    opt.value = String(i + 1).padStart(2, "0");
-    opt.textContent = m;
-    monthSel.appendChild(opt);
+    const opt = document.createElement("option"); opt.value = String(i + 1).padStart(2, "0"); opt.textContent = m; monthSel.appendChild(opt);
   });
   const now = new Date();
   monthSel.value = String(now.getMonth() + 1).padStart(2, "0");
-
   const yearSel = document.getElementById("exportYear");
   for (let y = now.getFullYear() - 2; y <= now.getFullYear() + 2; y++) {
-    const opt = document.createElement("option");
-    opt.value = String(y);
-    opt.textContent = String(y);
+    const opt = document.createElement("option"); opt.value = String(y); opt.textContent = String(y);
     if (y === now.getFullYear()) opt.selected = true;
     yearSel.appendChild(opt);
   }
@@ -851,38 +1323,44 @@ document.getElementById("exportBtn").addEventListener("click", () => {
   const month = document.getElementById("exportMonth").value;
   const year = document.getElementById("exportYear").value;
   const prefix = `${year}-${month}`;
-  const rows = allHires.filter(h => (h.dateOfHire || "").startsWith(prefix));
-  exportToExcel(rows, `NewlifeVenueHire_${monthNames[Number(month)-1]}_${year}.xlsx`);
+  exportToExcel(allHires.filter(h => (h.dateOfHire || "").startsWith(prefix)), `NewlifeVenueHire_${monthNames[Number(month) - 1]}_${year}.xlsx`);
 });
-
 document.getElementById("exportAllBtn").addEventListener("click", () => {
-  exportToExcel(allHires, `NewlifeVenueHire_AllHires_${new Date().toISOString().slice(0,10)}.xlsx`);
+  exportToExcel(allHires, `NewlifeVenueHire_AllHires_${todayISO()}.xlsx`);
 });
-
 function exportToExcel(rows, filename) {
   if (!rows.length) { toast("No hires found for that period."); return; }
   const data = rows.map(h => ({
     "Date of Hire": formatDate(h.dateOfHire),
+    "Enquiry Ref": h.enquiryRef || "",
     "Hirer": h.hirer || "",
     "Contact Name": h.contactName || "",
     "Email": h.email || "",
     "Phone Number": h.phone || "",
     "Room/s": h.rooms || "",
     "Booking Time": h.bookingTime || "",
-    "Required Equipment": h.requiredEquipment || "",
-    "Additional Notes": h.additionalNotes || "",
+    "Notes for Finance": h.additionalNotes || "",
     "Total Hire Fee (ex GST)": Number(h.totalHireFee || 0),
     "Deposit Amount (ex GST)": Number(h.depositAmount || 0),
     "Balance Amount (ex GST)": Number(h.balanceAmount || 0),
+    "Status": h.status === "cancelled" ? "Cancelled" : "Active",
+    "Cancel Outcome": h.status === "cancelled" ? ((CANCEL_OUTCOMES[h.cancelOutcome] || {}).label || "") : "",
+    "Amount Payable (Cancelled)": h.status === "cancelled" ? Number(h.cancelAmountPayable || 0) : "",
+    "Date Cancelled": h.status === "cancelled" ? formatDate(h.cancelDate) : "",
+    "Deposit Due": formatDate(h.depositDueDate),
     "Deposit Invoice #": h.depositInvoiceNumber || "",
     "Deposit Invoice Sent": h.depositInvoiceSent ? "Y" : "N",
     "Deposit Paid": h.depositPaid ? "Y" : "N",
+    "Balance Due": formatDate(h.balanceDueDate),
     "Balance Invoice #": h.balanceInvoiceNumber || "",
     "Balance Invoice Sent": h.balanceInvoiceSent ? "Y" : "N",
     "Balance Paid": h.balancePaid ? "Y" : "N",
+    "Cancellation Invoice #": h.cancelInvoiceNumber || "",
+    "Cancellation Invoice Sent": h.cancelInvoiceSent ? "Y" : "N",
+    "Cancellation Paid": h.cancelPaid ? "Y" : "N",
+    "Next Action": computeNextAction(h).text,
     "Invoicing Notes": h.invoicingNotes || "",
-    "Cancelled": h.cancelled ? "CANCELLED" : "",
-    "Agreement File": h.agreementFileURL || ""
+    "Archived": h.archived ? "Y" : "N"
   }));
   const ws = XLSX.utils.json_to_sheet(data);
   ws["!cols"] = Object.keys(data[0]).map(k => ({ wch: Math.max(14, k.length + 2) }));
@@ -893,59 +1371,33 @@ function exportToExcel(rows, filename) {
 }
 
 /* ---------------- CSV Import (Simon) ---------------- */
-const IMPORT_TEMPLATE_HEADERS = ["Date of Hire","Hirer","Contact Name","Email","Phone Number","Room/s","Booking Time","Required Equipment","Additional Notes","Total Hire Fee (ex GST)","Deposit Amount (ex GST)","Balance Amount (ex GST)"];
+const IMPORT_TEMPLATE_HEADERS = ["Date of Hire", "Hirer", "Contact Name", "Email", "Phone Number", "Room/s", "Booking Time", "Notes for Finance", "Total Hire Fee (ex GST)", "Deposit Amount (ex GST)", "Balance Amount (ex GST)"];
 const IMPORT_HEADER_MAP = {
-  "date of hire": "dateOfHire",
-  "hirer": "hirer",
-  "contact name": "contactName",
-  "email": "email",
-  "phone number": "phone",
-  "phone": "phone",
-  "room/s": "rooms",
-  "rooms": "rooms",
-  "booking time": "bookingTime",
-  "required equipment": "requiredEquipment",
-  "additional notes": "additionalNotes",
-  "notes": "additionalNotes",
-  "total hire fee (ex gst)": "totalHireFee",
-  "total hire fee": "totalHireFee",
-  "deposit amount (ex gst)": "depositAmount",
-  "deposit amount": "depositAmount",
-  "balance amount (ex gst)": "balanceAmount",
-  "balance amount": "balanceAmount"
+  "date of hire": "dateOfHire", "hirer": "hirer", "contact name": "contactName", "email": "email",
+  "phone number": "phone", "phone": "phone", "room/s": "rooms", "rooms": "rooms", "booking time": "bookingTime",
+  "notes for finance": "additionalNotes", "notes": "additionalNotes",
+  "total hire fee (ex gst)": "totalHireFee", "total hire fee": "totalHireFee",
+  "deposit amount (ex gst)": "depositAmount", "deposit amount": "depositAmount",
+  "balance amount (ex gst)": "balanceAmount", "balance amount": "balanceAmount"
 };
 
 function csvEscape(val) {
   const s = String(val ?? "");
   return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
 }
-
-// Hand-rolled CSV parser (not SheetJS) so date-like cells such as "2026-09-12"
-// come through as plain strings instead of being silently guessed into Excel
-// date serials, which is what XLSX.read() does with CSV input.
 function parseCsvText(text) {
   const rows = [];
   let row = [], field = "", inQuotes = false;
   for (let i = 0; i < text.length; i++) {
     const c = text[i];
     if (inQuotes) {
-      if (c === '"') {
-        if (text[i + 1] === '"') { field += '"'; i++; }
-        else { inQuotes = false; }
-      } else {
-        field += c;
-      }
-    } else if (c === '"') {
-      inQuotes = true;
-    } else if (c === ",") {
-      row.push(field); field = "";
-    } else if (c === "\n") {
-      row.push(field); rows.push(row); row = []; field = "";
-    } else if (c === "\r") {
-      // skip; \r\n line endings are handled via the following \n
-    } else {
-      field += c;
-    }
+      if (c === '"') { if (text[i + 1] === '"') { field += '"'; i++; } else { inQuotes = false; } }
+      else { field += c; }
+    } else if (c === '"') { inQuotes = true; }
+    else if (c === ",") { row.push(field); field = ""; }
+    else if (c === "\n") { row.push(field); rows.push(row); row = []; field = ""; }
+    else if (c === "\r") { /* skip */ }
+    else { field += c; }
   }
   if (field.length || row.length) { row.push(field); rows.push(row); }
   return rows.filter(r => !(r.length === 1 && r[0].trim() === ""));
@@ -959,38 +1411,24 @@ function csvRowsToObjects(rows) {
     return obj;
   });
 }
-
 document.getElementById("downloadTemplateBtn").addEventListener("click", () => {
-  const example = ["2026-09-12","Example Hirer Pty Ltd","Jane Smith","jane@example.com","0400000000","Lakeside Lounge West","9am-1pm","TV, microphone","Bring own signage","220","0","220"];
+  const example = ["2026-09-12", "Example Hirer Pty Ltd", "Jane Smith", "jane@example.com", "0400000000", "Lakeside Lounge West", "9am-1pm", "Bring own signage", "220", "0", "220"];
   const csv = [IMPORT_TEMPLATE_HEADERS, example].map(r => r.map(csvEscape).join(",")).join("\r\n");
   const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
   const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = "NewlifeVenueHire_ImportTemplate.csv";
-  a.click();
+  const a = document.createElement("a"); a.href = url; a.download = "NewlifeVenueHire_ImportTemplate.csv"; a.click();
   URL.revokeObjectURL(url);
   toast("Template downloaded. Dates must be in YYYY-MM-DD format.");
 });
-
 function parseImportDate(raw) {
   const s = String(raw || "").trim();
   if (!s) return null;
-  if (/^\d{4}-\d{1,2}-\d{1,2}$/.test(s)) {
-    const [y, m, d] = s.split("-");
-    return `${y}-${m.padStart(2, "0")}-${d.padStart(2, "0")}`;
-  }
+  if (/^\d{4}-\d{1,2}-\d{1,2}$/.test(s)) { const [y, m, d] = s.split("-"); return `${y}-${m.padStart(2, "0")}-${d.padStart(2, "0")}`; }
   const dmy = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
-  if (dmy) {
-    const [, d, m, y] = dmy;
-    return `${y}-${m.padStart(2, "0")}-${d.padStart(2, "0")}`;
-  }
+  if (dmy) { const [, d, m, y] = dmy; return `${y}-${m.padStart(2, "0")}-${d.padStart(2, "0")}`; }
   return null;
 }
-
-document.getElementById("importCsvBtn").addEventListener("click", () => {
-  document.getElementById("importCsvFile").click();
-});
+document.getElementById("importCsvBtn").addEventListener("click", () => document.getElementById("importCsvFile").click());
 document.getElementById("importCsvFile").addEventListener("change", handleCsvImport);
 
 function handleCsvImport(e) {
@@ -1002,29 +1440,18 @@ function handleCsvImport(e) {
   const reader = new FileReader();
   reader.onload = async (ev) => {
     let rows;
-    try {
-      rows = csvRowsToObjects(parseCsvText(String(ev.target.result)));
-    } catch (err) {
-      console.error(err);
-      toast("Couldn't read that CSV file.");
-      return;
-    }
+    try { rows = csvRowsToObjects(parseCsvText(String(ev.target.result))); }
+    catch (err) { console.error(err); toast("Couldn't read that CSV file."); return; }
     if (!rows.length) { toast("No rows found in that CSV."); return; }
 
-    const toImport = [];
-    const errors = [];
+    const toImport = [], errors = [];
     rows.forEach((row, i) => {
       const mapped = {};
-      Object.keys(row).forEach(k => {
-        const field = IMPORT_HEADER_MAP[k.trim().toLowerCase()];
-        if (field) mapped[field] = row[k];
-      });
-      const rowNum = i + 2; // +1 for 0-index, +1 for header row
-
+      Object.keys(row).forEach(k => { const field = IMPORT_HEADER_MAP[k.trim().toLowerCase()]; if (field) mapped[field] = row[k]; });
+      const rowNum = i + 2;
       if (!mapped.hirer) { errors.push(`Row ${rowNum}: missing Hirer — skipped.`); return; }
       const iso = parseImportDate(mapped.dateOfHire);
       if (!iso) { errors.push(`Row ${rowNum}: missing/unrecognised Date of Hire (use YYYY-MM-DD) — skipped.`); return; }
-
       toImport.push({
         dateOfHire: iso,
         hirer: String(mapped.hirer || "").trim(),
@@ -1033,44 +1460,535 @@ function handleCsvImport(e) {
         phone: String(mapped.phone || "").trim(),
         rooms: String(mapped.rooms || "").trim(),
         bookingTime: String(mapped.bookingTime || "").trim(),
-        requiredEquipment: String(mapped.requiredEquipment || "").trim(),
         additionalNotes: String(mapped.additionalNotes || "").trim(),
         totalHireFee: parseFloat(mapped.totalHireFee) || 0,
         depositAmount: parseFloat(mapped.depositAmount) || 0,
         balanceAmount: parseFloat(mapped.balanceAmount) || 0,
-        cancelled: false,
-        createdAt: serverTimestamp(),
-        createdBy: currentRole,
-        updatedAt: serverTimestamp(),
-        updatedBy: currentRole
+        status: "active", cancelOutcome: "", cancelAmountPayable: 0, cancelDate: "",
+        depositDueDate: todayISO(),
+        balanceDueDate: iso ? addDaysISO(iso, -14) : "",
+        depositInvoiceNumber: "", balanceInvoiceNumber: "",
+        depositInvoiceSent: false, depositPaid: false, balanceInvoiceSent: false, balancePaid: false,
+        cancelInvoiceNumber: "", cancelInvoiceSent: false, cancelPaid: false,
+        invoicingNotes: "", archived: false,
+        createdAt: serverTimestamp(), createdBy: currentRole, updatedAt: serverTimestamp(), updatedBy: currentRole
       });
     });
+    if (!toImport.length) { toast("Nothing to import — check the file matches the template."); if (errors.length) console.warn(errors.join("\n")); return; }
 
-    if (!toImport.length) {
-      toast("Nothing to import — check the file matches the template.");
-      if (errors.length) console.warn(errors.join("\n"));
-      return;
-    }
-
-    const confirmMsg = `Import ${toImport.length} hire(s)?` + (errors.length ? ` (${errors.length} row(s) will be skipped — see browser console for details)` : "");
+    const confirmMsg = `Import ${toImport.length} hire(s)?` + (errors.length ? ` (${errors.length} row(s) will be skipped — see browser console)` : "");
     if (!confirm(confirmMsg)) return;
 
     try {
       for (let i = 0; i < toImport.length; i += 450) {
         const chunk = toImport.slice(i, i + 450);
         const batch = writeBatch(db);
-        chunk.forEach(data => batch.set(doc(collection(db, "hires")), data));
+        chunk.forEach(data => {
+          data.enquiryRef = generateEnquiryRefForBatch();
+          batch.set(doc(collection(db, "hires")), data);
+        });
         await batch.commit();
       }
       toast(`Imported ${toImport.length} hire(s).${errors.length ? ` ${errors.length} row(s) skipped — see console.` : ""}`);
       if (errors.length) console.warn(errors.join("\n"));
-    } catch (err) {
-      console.error(err);
-      toast("Import failed — check Firestore rules & connection.");
-    }
+    } catch (err) { console.error(err); toast("Import failed — check Firestore rules & connection."); }
   };
   reader.readAsText(file);
 }
+let _importRefCounter = 0;
+function generateEnquiryRefForBatch() {
+  const base = generateEnquiryRef();
+  _importRefCounter++;
+  const [prefix, datePart] = base.split(/-(\d{6})-/).filter(Boolean);
+  const now = new Date();
+  const datePartStr = `${String(now.getFullYear()).slice(2)}${String(now.getMonth() + 1).padStart(2, "0")}${String(now.getDate()).padStart(2, "0")}`;
+  const existingToday = allHires.filter(h => (h.enquiryRef || "").startsWith(`NL-${datePartStr}-`)).length;
+  return `NL-${datePartStr}-${String(existingToday + _importRefCounter).padStart(2, "0")}`;
+}
+
+/* ---------------- Recurring hirers ---------------- */
+function renderRecurringTable() {
+  const tbody = document.getElementById("recurringTableBody");
+  document.getElementById("recurringEmptyState").classList.toggle("hidden", allRecurringHirers.length !== 0);
+  tbody.innerHTML = "";
+  allRecurringHirers.forEach(h => {
+    const periods = allPeriods.filter(p => p.hirerId === h.id);
+    let na = NOTHING_OUTSTANDING;
+    if (!periods.length) na = { key: "none", text: "No billing periods yet", cls: "neutral", dueDateStr: null, days: null };
+    else {
+      const actions = periods.map(computePeriodNextAction).filter(a => a.key !== "done");
+      if (actions.length) {
+        actions.sort((a, b) => (a.days === null ? Infinity : a.days) - (b.days === null ? Infinity : b.days));
+        na = actions[0];
+      }
+    }
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td>${escapeHtml(h.hirer || "")}</td>
+      <td>${escapeHtml(h.contactName || "")}<br><span style="color:var(--muted);font-size:11.5px;">${escapeHtml(h.email || "")}</span></td>
+      <td>${escapeHtml(h.rooms || "")}</td>
+      <td>${escapeHtml(h.dayTime || "")}</td>
+      <td>$${Number(h.ratePerSession || 0).toFixed(2)}</td>
+      <td>${escapeHtml((h.billingFrequency || "").replace(/^./, c => c.toUpperCase()))}</td>
+      <td>${nextActionPillHtml(na)}</td>
+      <td class="row-actions">
+        <button data-action="periods" data-id="${h.id}">Periods</button>
+        <button data-action="edit" data-id="${h.id}">${currentRole === "simon" ? "Edit" : "View"}</button>
+      </td>`;
+    tbody.appendChild(tr);
+  });
+  tbody.querySelectorAll('button[data-action="periods"]').forEach(btn => btn.addEventListener("click", () => openPeriodsModal(btn.dataset.id)));
+  tbody.querySelectorAll('button[data-action="edit"]').forEach(btn => btn.addEventListener("click", () => openHirerModal(btn.dataset.id)));
+}
+
+document.getElementById("addRecurringHirerBtn").addEventListener("click", () => openHirerModal(null));
+document.getElementById("hirerModalCloseX").addEventListener("click", closeHirerModal);
+document.getElementById("hirerModalOverlay").addEventListener("click", (e) => { if (e.target.id === "hirerModalOverlay") closeHirerModal(); });
+
+function openHirerModal(id) {
+  editingHirerId = id;
+  const h = id ? allRecurringHirers.find(x => x.id === id) : null;
+  document.getElementById("hirerModalTitle").textContent = id ? "Edit Recurring Hirer" : "New Recurring Hirer";
+  document.getElementById("rh_hirer").value = h?.hirer || "";
+  document.getElementById("rh_contact").value = h?.contactName || "";
+  document.getElementById("rh_email").value = h?.email || "";
+  document.getElementById("rh_phone").value = h?.phone || "";
+  document.getElementById("rh_rooms").value = h?.rooms || "";
+  document.getElementById("rh_dayTime").value = h?.dayTime || "";
+  document.getElementById("rh_rate").value = h?.ratePerSession ?? "";
+  document.getElementById("rh_frequency").value = h?.billingFrequency || "weekly";
+  document.getElementById("rh_notes").value = h?.notes || "";
+  const editable = currentRole === "simon";
+  ["rh_hirer", "rh_contact", "rh_email", "rh_phone", "rh_rooms", "rh_dayTime", "rh_rate", "rh_frequency", "rh_notes"].forEach(fid => setFieldEnabled(fid, editable));
+  document.getElementById("saveHirerBtn").classList.toggle("hidden", !editable);
+  document.getElementById("deleteHirerBtn").classList.toggle("hidden", !(id && editable));
+  document.getElementById("hirerModalOverlay").classList.remove("hidden");
+}
+function closeHirerModal() { document.getElementById("hirerModalOverlay").classList.add("hidden"); editingHirerId = null; }
+
+document.getElementById("saveHirerBtn").addEventListener("click", async () => {
+  if (currentRole !== "simon") return;
+  const data = {
+    hirer: document.getElementById("rh_hirer").value.trim(),
+    contactName: document.getElementById("rh_contact").value.trim(),
+    email: document.getElementById("rh_email").value.trim(),
+    phone: document.getElementById("rh_phone").value.trim(),
+    rooms: document.getElementById("rh_rooms").value.trim(),
+    dayTime: document.getElementById("rh_dayTime").value.trim(),
+    ratePerSession: parseFloat(document.getElementById("rh_rate").value) || 0,
+    billingFrequency: document.getElementById("rh_frequency").value,
+    notes: document.getElementById("rh_notes").value.trim(),
+    updatedAt: serverTimestamp(), updatedBy: currentRole
+  };
+  if (!data.hirer) { toast("Hirer name is required."); return; }
+  try {
+    if (!editingHirerId) {
+      data.createdAt = serverTimestamp(); data.createdBy = currentRole;
+      await addDoc(collection(db, "recurringHirers"), data);
+    } else {
+      await updateDoc(doc(db, "recurringHirers", editingHirerId), data);
+    }
+    toast("Saved.");
+    closeHirerModal();
+  } catch (e) { console.error(e); toast("Save failed — check Firestore rules & connection."); }
+});
+document.getElementById("deleteHirerBtn").addEventListener("click", async () => {
+  if (!editingHirerId) return;
+  if (!confirm("Delete this recurring hirer and all of their billing periods? This cannot be undone.")) return;
+  try {
+    const periods = allPeriods.filter(p => p.hirerId === editingHirerId);
+    for (const p of periods) await deleteDoc(doc(db, "recurringHirers", editingHirerId, "periods", p.id));
+    await deleteDoc(doc(db, "recurringHirers", editingHirerId));
+    toast("Recurring hirer deleted.");
+    closeHirerModal();
+  } catch (e) { console.error(e); toast("Delete failed."); }
+});
+
+/* ---------------- Billing periods ---------------- */
+function openPeriodsModal(hirerId) {
+  currentPeriodsHirerId = hirerId;
+  const h = allRecurringHirers.find(x => x.id === hirerId);
+  document.getElementById("periodsModalTitle").textContent = `Billing Periods — ${h ? h.hirer : ""}`;
+  document.getElementById("periodsModalSub").textContent = h ? `${h.dayTime || ""} · $${Number(h.ratePerSession || 0).toFixed(2)}/session · ${h.billingFrequency || ""}` : "";
+  hidePeriodForm();
+  renderPeriodsTable();
+  document.getElementById("periodsModalOverlay").classList.remove("hidden");
+}
+document.getElementById("periodsModalCloseX").addEventListener("click", closePeriodsModal);
+document.getElementById("periodsModalOverlay").addEventListener("click", (e) => { if (e.target.id === "periodsModalOverlay") closePeriodsModal(); });
+function closePeriodsModal() {
+  document.getElementById("periodsModalOverlay").classList.add("hidden");
+  currentPeriodsHirerId = null;
+  hidePeriodForm();
+}
+
+function renderPeriodsTable() {
+  const periods = allPeriods.filter(p => p.hirerId === currentPeriodsHirerId).sort((a, b) => (a.periodStart || "").localeCompare(b.periodStart || ""));
+  const tbody = document.getElementById("periodsTableBody");
+  document.getElementById("periodsEmptyState").classList.toggle("hidden", periods.length !== 0);
+  tbody.innerHTML = "";
+  periods.forEach(p => {
+    const na = computePeriodNextAction(p);
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td>${formatDate(p.periodStart)} – ${formatDate(p.periodEnd)}</td>
+      <td>${Number(p.sessionCount || 0)}</td>
+      <td>$${Number(p.amount || 0).toFixed(2)}</td>
+      <td>${escapeHtml(p.invoiceNumber || "")}</td>
+      <td>${nextActionPillHtml(na)}</td>
+      <td class="row-actions"><button data-action="editPeriod" data-id="${p.id}">Edit</button></td>`;
+    tbody.appendChild(tr);
+  });
+  tbody.querySelectorAll('button[data-action="editPeriod"]').forEach(btn => btn.addEventListener("click", () => showPeriodForm(btn.dataset.id)));
+}
+
+document.getElementById("newPeriodBtn").addEventListener("click", () => showPeriodForm(null));
+document.getElementById("cancelPeriodFormBtn").addEventListener("click", hidePeriodForm);
+
+function showPeriodForm(periodId) {
+  editingPeriodId = periodId;
+  const p = periodId ? allPeriods.find(x => x.id === periodId) : null;
+  const hirerRec = allRecurringHirers.find(h => h.id === currentPeriodsHirerId);
+  document.getElementById("periodFormLegend").textContent = periodId ? "Edit Period" : "New Period";
+  document.getElementById("p_start").value = p?.periodStart || "";
+  document.getElementById("p_end").value = p?.periodEnd || "";
+  document.getElementById("p_sessions").value = p?.sessionCount ?? "";
+  document.getElementById("p_amount").value = p?.amount ?? (hirerRec ? "" : "");
+  document.getElementById("p_invoiceNumber").value = p?.invoiceNumber || "";
+  document.getElementById("p_dueDate").value = p?.dueDate || (p?.periodEnd || "");
+  document.getElementById("p_sent").checked = !!p?.sent;
+  document.getElementById("p_paid").checked = !!p?.paid;
+  currentAdjustments = p?.adjustments ? [...p.adjustments] : [];
+  renderAdjustmentsList();
+  document.getElementById("deletePeriodBtn").classList.toggle("hidden", !periodId);
+  document.getElementById("periodFormFieldset").classList.remove("hidden");
+}
+function hidePeriodForm() {
+  document.getElementById("periodFormFieldset").classList.add("hidden");
+  editingPeriodId = null;
+  currentAdjustments = [];
+}
+document.getElementById("p_sessions").addEventListener("input", () => {
+  const hirerRec = allRecurringHirers.find(h => h.id === currentPeriodsHirerId);
+  if (!hirerRec || editingPeriodId) return; // only auto-suggest for brand-new periods
+  const sessions = parseFloat(document.getElementById("p_sessions").value) || 0;
+  const adjTotal = currentAdjustments.reduce((s, a) => s + Number(a.amount || 0), 0);
+  document.getElementById("p_amount").value = (sessions * Number(hirerRec.ratePerSession || 0) + adjTotal).toFixed(2);
+});
+function renderAdjustmentsList() {
+  const el = document.getElementById("p_adjustmentsList");
+  el.innerHTML = "";
+  currentAdjustments.forEach((a, i) => {
+    const row = document.createElement("div");
+    row.className = "adjustment-row";
+    const lbl = document.createElement("span"); lbl.textContent = `${a.label} (${a.amount >= 0 ? "+" : ""}$${Number(a.amount).toFixed(2)})`;
+    const rm = document.createElement("button"); rm.textContent = "✕"; rm.type = "button";
+    rm.addEventListener("click", () => {
+      const amt = document.getElementById("p_amount");
+      amt.value = (parseFloat(amt.value || "0") - Number(a.amount || 0)).toFixed(2);
+      currentAdjustments.splice(i, 1);
+      renderAdjustmentsList();
+    });
+    row.appendChild(lbl); row.appendChild(rm);
+    el.appendChild(row);
+  });
+}
+document.getElementById("p_addAdjustment").addEventListener("click", () => {
+  const label = document.getElementById("p_adjLabel").value.trim();
+  const amount = parseFloat(document.getElementById("p_adjAmount").value);
+  if (!label || isNaN(amount)) { toast("Enter both an adjustment label and amount."); return; }
+  currentAdjustments.push({ label, amount });
+  const amtField = document.getElementById("p_amount");
+  amtField.value = (parseFloat(amtField.value || "0") + amount).toFixed(2);
+  document.getElementById("p_adjLabel").value = "";
+  document.getElementById("p_adjAmount").value = "";
+  renderAdjustmentsList();
+});
+
+document.getElementById("savePeriodBtn").addEventListener("click", async () => {
+  if (!currentPeriodsHirerId) return;
+  const data = {
+    periodStart: document.getElementById("p_start").value,
+    periodEnd: document.getElementById("p_end").value,
+    sessionCount: parseFloat(document.getElementById("p_sessions").value) || 0,
+    amount: parseFloat(document.getElementById("p_amount").value) || 0,
+    invoiceNumber: document.getElementById("p_invoiceNumber").value.trim(),
+    dueDate: document.getElementById("p_dueDate").value,
+    sent: document.getElementById("p_sent").checked,
+    paid: document.getElementById("p_paid").checked,
+    adjustments: currentAdjustments,
+    updatedAt: serverTimestamp()
+  };
+  if (!data.periodStart || !data.periodEnd) { toast("Period start and end are required."); return; }
+  try {
+    if (!editingPeriodId) {
+      data.createdAt = serverTimestamp();
+      await addDoc(collection(db, "recurringHirers", currentPeriodsHirerId, "periods"), data);
+    } else {
+      await updateDoc(doc(db, "recurringHirers", currentPeriodsHirerId, "periods", editingPeriodId), data);
+    }
+    toast("Period saved.");
+    hidePeriodForm();
+  } catch (e) { console.error(e); toast("Save failed — check Firestore rules & connection."); }
+});
+document.getElementById("deletePeriodBtn").addEventListener("click", async () => {
+  if (!editingPeriodId || !currentPeriodsHirerId) return;
+  if (!confirm("Delete this billing period? This cannot be undone.")) return;
+  try {
+    await deleteDoc(doc(db, "recurringHirers", currentPeriodsHirerId, "periods", editingPeriodId));
+    toast("Period deleted.");
+    hidePeriodForm();
+  } catch (e) { console.error(e); toast("Delete failed."); }
+});
+
+/* ---------------- Analytics ---------------- */
+const FY_MONTHS = [7, 8, 9, 10, 11, 12, 1, 2, 3, 4, 5, 6];
+const FY_MONTH_LABELS = ["Jul", "Aug", "Sep", "Oct", "Nov", "Dec", "Jan", "Feb", "Mar", "Apr", "May", "Jun"];
+
+function fyOfDate(iso) { const [y, m] = iso.split("-").map(Number); return m >= 7 ? y : y - 1; }
+function fyLabel(startYear) { return `FY${startYear}–${String(startYear + 1).slice(2)}`; }
+function fyYearForMonthIdx(fyStart, idx) { return idx < 6 ? fyStart : fyStart + 1; }
+function niceCeil(v) {
+  if (v <= 0) return 100;
+  const mag = Math.pow(10, Math.floor(Math.log10(v)));
+  const norm = v / mag;
+  const step = norm <= 1 ? 1 : norm <= 2 ? 2 : norm <= 5 ? 5 : 10;
+  return step * mag;
+}
+function sumInvoicedPaid(h) {
+  let invoiced = 0, paid = 0;
+  if (h.status === "cancelled") {
+    const payable = Number(h.cancelAmountPayable || 0);
+    if (h.cancelInvoiceSent) invoiced += payable;
+    if (h.cancelPaid) paid += payable;
+  } else {
+    const dep = Number(h.depositAmount || 0), bal = Number(h.balanceAmount || 0);
+    if (h.depositInvoiceSent) invoiced += dep;
+    if (h.balanceInvoiceSent) invoiced += bal;
+    if (h.depositPaid) paid += dep;
+    if (h.balancePaid) paid += bal;
+  }
+  return { invoiced, paid };
+}
+function sumPaidOnly(h) { return sumInvoicedPaid(h).paid; }
+function groupByPaid(hires, keyFn) {
+  const map = new Map();
+  hires.forEach(h => {
+    const key = (keyFn(h) || "").trim() || "Unspecified";
+    map.set(key, (map.get(key) || 0) + sumPaidOnly(h));
+  });
+  let entries = [...map.entries()].filter(([, v]) => v > 0).sort((a, b) => b[1] - a[1]);
+  if (entries.length > 8) {
+    const top = entries.slice(0, 7);
+    const otherTotal = entries.slice(7).reduce((s, [, v]) => s + v, 0);
+    entries = [...top, ["Other", otherTotal]];
+  }
+  return entries;
+}
+
+function populateAnalyticsFilters() {
+  const fySel = document.getElementById("fyFilter");
+  if (!fySel.dataset.populated) {
+    const today = new Date();
+    const curFY = (today.getMonth() + 1) >= 7 ? today.getFullYear() : today.getFullYear() - 1;
+    const fySet = new Set([curFY - 1, curFY, curFY + 1]);
+    allHires.forEach(h => { if (h.dateOfHire) fySet.add(fyOfDate(h.dateOfHire)); });
+    [...fySet].sort((a, b) => a - b).forEach(y => {
+      const opt = document.createElement("option"); opt.value = String(y); opt.textContent = fyLabel(y); fySel.appendChild(opt);
+    });
+    fySel.value = String(curFY);
+    fySel.dataset.populated = "1";
+  }
+  const roomSel = document.getElementById("analyticsRoomFilter");
+  const existingRooms = new Set(Array.from(roomSel.options).map(o => o.value));
+  [...new Set(allHires.map(h => h.rooms).filter(Boolean))].sort().forEach(r => {
+    if (!existingRooms.has(r)) { const opt = document.createElement("option"); opt.value = r; opt.textContent = r; roomSel.appendChild(opt); }
+  });
+  const hirerSel = document.getElementById("analyticsHirerFilter");
+  const existingHirers = new Set(Array.from(hirerSel.options).map(o => o.value));
+  [...new Set(allHires.map(h => h.hirer).filter(Boolean))].sort().forEach(h => {
+    if (!existingHirers.has(h)) { const opt = document.createElement("option"); opt.value = h; opt.textContent = h; hirerSel.appendChild(opt); }
+  });
+}
+["fyFilter", "analyticsRoomFilter", "analyticsHirerFilter"].forEach(id => document.getElementById(id).addEventListener("change", renderAnalytics));
+document.getElementById("toggleTableViewBtn").addEventListener("click", (e) => {
+  const wrap = document.querySelector(".viz-chart-wrap");
+  const table = document.getElementById("lineTableView");
+  const showingTable = !table.classList.contains("hidden");
+  table.classList.toggle("hidden", showingTable);
+  wrap.classList.toggle("hidden", !showingTable);
+  e.target.textContent = showingTable ? "View as Table" : "View as Chart";
+});
+
+function renderAnalytics() {
+  populateAnalyticsFilters();
+  const fyStart = Number(document.getElementById("fyFilter").value);
+  document.getElementById("fyLabel").textContent = fyLabel(fyStart);
+  const roomSel = document.getElementById("analyticsRoomFilter").value;
+  const hirerSel = document.getElementById("analyticsHirerFilter").value;
+
+  const inFY = h => !h.archived && h.dateOfHire && fyOfDate(h.dateOfHire) === fyStart;
+  const fyHires = allHires.filter(h => inFY(h) && (!roomSel || h.rooms === roomSel) && (!hirerSel || h.hirer === hirerSel));
+  const roomChartHires = allHires.filter(h => inFY(h) && (!hirerSel || h.hirer === hirerSel));
+  const hirerChartHires = allHires.filter(h => inFY(h) && (!roomSel || h.rooms === roomSel));
+
+  const invoiced = FY_MONTHS.map(() => 0), paid = FY_MONTHS.map(() => 0);
+  fyHires.forEach(h => {
+    const idx = FY_MONTHS.indexOf(Number((h.dateOfHire || "").split("-")[1]));
+    if (idx === -1) return;
+    const sums = sumInvoicedPaid(h);
+    invoiced[idx] += sums.invoiced;
+    paid[idx] += sums.paid;
+  });
+
+  renderLineChart(fyStart, invoiced, paid);
+  renderLineTable(fyStart, invoiced, paid);
+  renderAnalyticsStats(fyHires, invoiced, paid);
+  renderBarChart("roomBarChart", groupByPaid(roomChartHires, h => h.rooms));
+  renderBarChart("hirerBarChart", groupByPaid(hirerChartHires, h => h.hirer));
+}
+
+function renderAnalyticsStats(fyHires, invoiced, paid) {
+  const totalInvoiced = invoiced.reduce((a, b) => a + b, 0);
+  const totalPaid = paid.reduce((a, b) => a + b, 0);
+  const outstanding = Math.max(0, totalInvoiced - totalPaid);
+  const collectionRate = totalInvoiced > 0 ? Math.round((totalPaid / totalInvoiced) * 100) : 0;
+  const cards = [
+    { num: fmtMoney(totalInvoiced), lbl: "Total Invoiced" },
+    { num: fmtMoney(totalPaid), lbl: "Total Paid" },
+    { num: fmtMoney(outstanding), lbl: "Outstanding" },
+    { num: collectionRate + "%", lbl: "Collection Rate" },
+    { num: String(fyHires.length), lbl: "Hires This FY" }
+  ];
+  document.getElementById("analyticsStats").innerHTML = cards.map(c =>
+    `<div class="stat-card"><div class="num">${c.num}</div><div class="lbl">${c.lbl}</div></div>`
+  ).join("");
+}
+function renderLineTable(fyStart, invoiced, paid) {
+  const el = document.getElementById("lineTableView");
+  el.innerHTML = "";
+  const table = document.createElement("table");
+  const thead = document.createElement("thead");
+  thead.innerHTML = "<tr><th>Month</th><th>Invoiced</th><th>Paid</th></tr>";
+  const tbody = document.createElement("tbody");
+  FY_MONTH_LABELS.forEach((lbl, i) => {
+    const tr = document.createElement("tr");
+    const tdMonth = document.createElement("td"); tdMonth.textContent = `${lbl} ${fyYearForMonthIdx(fyStart, i)}`;
+    const tdInv = document.createElement("td"); tdInv.textContent = fmtMoney(invoiced[i]);
+    const tdPaid = document.createElement("td"); tdPaid.textContent = fmtMoney(paid[i]);
+    tr.appendChild(tdMonth); tr.appendChild(tdInv); tr.appendChild(tdPaid);
+    tbody.appendChild(tr);
+  });
+  table.appendChild(thead); table.appendChild(tbody);
+  el.appendChild(table);
+}
+function renderLineChart(fyStart, invoiced, paid) {
+  const svg = document.getElementById("lineChartSvg");
+  const W = 860, H = 320, padL = 52, padR = 16, padT = 16, padB = 30;
+  const plotW = W - padL - padR, plotH = H - padT - padB;
+  const maxVal = Math.max(1, ...invoiced, ...paid);
+  const niceMax = niceCeil(maxVal * 1.15);
+  const xStep = plotW / (FY_MONTHS.length - 1);
+  const yFor = v => padT + plotH - (Math.min(v, niceMax) / niceMax) * plotH;
+  const xFor = i => padL + i * xStep;
+
+  const parts = [];
+  const ticks = 4;
+  for (let t = 0; t <= ticks; t++) {
+    const v = (niceMax / ticks) * t;
+    const y = yFor(v);
+    parts.push(`<line class="viz-grid-line" x1="${padL}" y1="${y.toFixed(1)}" x2="${W - padR}" y2="${y.toFixed(1)}" />`);
+    parts.push(`<text class="viz-axis-text" x="${padL - 8}" y="${(y + 3).toFixed(1)}" text-anchor="end">$${formatCompact(v)}</text>`);
+  }
+  FY_MONTH_LABELS.forEach((lbl, i) => {
+    parts.push(`<text class="viz-axis-text" x="${xFor(i).toFixed(1)}" y="${H - 8}" text-anchor="middle">${lbl}</text>`);
+  });
+  function linePath(series) { return series.map((v, i) => `${i === 0 ? "M" : "L"} ${xFor(i).toFixed(1)} ${yFor(v).toFixed(1)}`).join(" "); }
+  parts.push(`<path class="viz-line" d="${linePath(invoiced)}" style="stroke:var(--viz-blue)" />`);
+  parts.push(`<path class="viz-line" d="${linePath(paid)}" style="stroke:var(--viz-orange)" />`);
+  const lastIdx = FY_MONTHS.length - 1;
+  [[invoiced, "var(--viz-blue)"], [paid, "var(--viz-orange)"]].forEach(([data, color]) => {
+    parts.push(`<circle cx="${xFor(lastIdx).toFixed(1)}" cy="${yFor(data[lastIdx]).toFixed(1)}" r="5" style="fill:${color};stroke:var(--card);stroke-width:2" />`);
+  });
+  parts.push(`<text class="viz-endlabel" x="${(xFor(lastIdx) - 8).toFixed(1)}" y="${(yFor(invoiced[lastIdx]) - 10).toFixed(1)}" text-anchor="end">${fmtMoney(invoiced[lastIdx])}</text>`);
+  parts.push(`<text class="viz-endlabel" x="${(xFor(lastIdx) - 8).toFixed(1)}" y="${(yFor(paid[lastIdx]) + 18).toFixed(1)}" text-anchor="end">${fmtMoney(paid[lastIdx])}</text>`);
+  parts.push(`<line id="vizCrosshair" class="viz-crosshair hidden" x1="0" y1="${padT}" x2="0" y2="${padT + plotH}" />`);
+  parts.push(`<circle id="vizHoverDotInvoiced" r="5" class="hidden" style="fill:var(--viz-blue);stroke:var(--card);stroke-width:2" />`);
+  parts.push(`<circle id="vizHoverDotPaid" r="5" class="hidden" style="fill:var(--viz-orange);stroke:var(--card);stroke-width:2" />`);
+  parts.push(`<rect id="vizHitRect" x="${padL}" y="${padT}" width="${plotW}" height="${plotH}" fill="transparent" />`);
+  svg.innerHTML = parts.join("\n");
+
+  const hitRect = document.getElementById("vizHitRect");
+  const showAt = (evt) => {
+    const rect = svg.getBoundingClientRect();
+    const scaleX = W / rect.width;
+    const localX = (evt.clientX - rect.left) * scaleX;
+    let idx = Math.round((localX - padL) / xStep);
+    idx = Math.max(0, Math.min(FY_MONTHS.length - 1, idx));
+    const cx = xFor(idx);
+    const crosshair = document.getElementById("vizCrosshair");
+    crosshair.setAttribute("x1", cx); crosshair.setAttribute("x2", cx);
+    crosshair.classList.remove("hidden");
+    const dotI = document.getElementById("vizHoverDotInvoiced");
+    const dotP = document.getElementById("vizHoverDotPaid");
+    dotI.setAttribute("cx", cx); dotI.setAttribute("cy", yFor(invoiced[idx])); dotI.classList.remove("hidden");
+    dotP.setAttribute("cx", cx); dotP.setAttribute("cy", yFor(paid[idx])); dotP.classList.remove("hidden");
+    showVizTooltip(evt, `${FY_MONTH_LABELS[idx]} ${fyYearForMonthIdx(fyStart, idx)}`, [
+      { label: "Invoiced", value: fmtMoney(invoiced[idx]), color: "var(--viz-blue)" },
+      { label: "Paid", value: fmtMoney(paid[idx]), color: "var(--viz-orange)" }
+    ]);
+  };
+  hitRect.addEventListener("pointermove", showAt);
+  hitRect.addEventListener("pointerleave", () => {
+    document.getElementById("vizCrosshair").classList.add("hidden");
+    document.getElementById("vizHoverDotInvoiced").classList.add("hidden");
+    document.getElementById("vizHoverDotPaid").classList.add("hidden");
+    hideVizTooltip();
+  });
+}
+function renderBarChart(containerId, entries) {
+  const el = document.getElementById(containerId);
+  el.innerHTML = "";
+  if (!entries.length) {
+    const empty = document.createElement("div");
+    empty.className = "empty-state"; empty.style.padding = "20px"; empty.textContent = "No paid revenue in this period.";
+    el.appendChild(empty); return;
+  }
+  const max = Math.max(...entries.map(([, v]) => v));
+  entries.forEach(([label, val]) => {
+    const row = document.createElement("div");
+    row.className = "bar-row"; row.tabIndex = 0;
+    const lblEl = document.createElement("span"); lblEl.className = "bar-label"; lblEl.title = label; lblEl.textContent = label;
+    const track = document.createElement("span"); track.className = "bar-track";
+    const fill = document.createElement("span"); fill.className = "bar-fill"; fill.style.width = (max ? (val / max * 100) : 0) + "%";
+    track.appendChild(fill);
+    const valEl = document.createElement("span"); valEl.className = "bar-value"; valEl.textContent = "$" + formatCompact(val);
+    row.appendChild(lblEl); row.appendChild(track); row.appendChild(valEl);
+    el.appendChild(row);
+    const show = (evt) => showVizTooltip(evt, label, [{ label: "Paid", value: fmtMoney(val), color: "var(--viz-blue)" }]);
+    row.addEventListener("mouseenter", show); row.addEventListener("mousemove", show);
+    row.addEventListener("mouseleave", hideVizTooltip);
+    row.addEventListener("focus", show); row.addEventListener("blur", hideVizTooltip);
+  });
+}
+function showVizTooltip(evt, title, rows) {
+  const el = document.getElementById("vizTooltip");
+  el.innerHTML = "";
+  const titleEl = document.createElement("div"); titleEl.className = "tt-title"; titleEl.textContent = title; el.appendChild(titleEl);
+  rows.forEach(r => {
+    const rowEl = document.createElement("div"); rowEl.className = "tt-row";
+    const left = document.createElement("span"); left.className = "tt-left";
+    if (r.color) { const key = document.createElement("span"); key.className = "tt-key"; key.style.background = r.color; left.appendChild(key); }
+    const lbl = document.createElement("span"); lbl.textContent = r.label; left.appendChild(lbl);
+    const val = document.createElement("span"); val.className = "tt-value"; val.textContent = r.value;
+    rowEl.appendChild(left); rowEl.appendChild(val); el.appendChild(rowEl);
+  });
+  el.classList.remove("hidden");
+  const anchor = document.getElementById("analyticsView").getBoundingClientRect();
+  el.style.left = (evt.clientX - anchor.left + 16) + "px";
+  el.style.top = (evt.clientY - anchor.top + 16) + "px";
+}
+function hideVizTooltip() { document.getElementById("vizTooltip").classList.add("hidden"); }
 
 /* ---------------- Toast ---------------- */
 let toastTimer = null;
